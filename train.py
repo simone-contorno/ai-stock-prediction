@@ -21,7 +21,8 @@ from utils import (
     split_train_test,
     plot_training_history,
     plot_predictions,
-    create_output_directories
+    create_output_directories,
+    save_normalization_params
 )
 
 def build_model(input_shape: tuple, output_shape: int, config: Dict[str, Any], 
@@ -148,6 +149,9 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         # Normalize the input data
         input_normalized, input_min, input_max = normalize_data(input_data)
         logger.info("Data normalized")
+        
+        # Save normalization parameters
+        save_normalization_params(input_min, input_max, output_dirs['models'], logger)
         
         # Prepare sequence data for RNN
         X_sequence, y_sequence = prepare_sequence_data(input_normalized, target_data, shift, logger)

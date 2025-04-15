@@ -16,7 +16,8 @@ from utils import (
     normalize_data,
     prepare_sequence_data,
     plot_predictions,
-    create_output_directories
+    create_output_directories,
+    load_normalization_params
 )
 
 def load_and_prepare_data(config: Dict[str, Any], logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -201,8 +202,17 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         # Load and prepare data
         input_data, target_data, original_data = load_and_prepare_data(config, logger)
         
-        # Normalize the input data
-        input_normalized, input_min, input_max = normalize_data(input_data)
+        # Load normalization parameters from the model directory
+        model_dir = os.path.dirname(os.path.abspath(model_path))
+        data_min, data_max = load_normalization_params(model_dir, logger)
+        
+        # Normalize the input data using the saved parameters
+        if data_min is not None and data_max is not None:
+            logger.info("Using saved normalization parameters")
+            input_normalized, _, _ = normalize_data(input_data, data_min, data_max)
+        else:
+            logger.warning("Saved normalization parameters not found, calculating from current data")
+            input_normalized, input_min, input_max = normalize_data(input_data)
         logger.info("Data normalized")
         
         # Prepare sequence data for prediction

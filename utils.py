@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import logging
+import json
 from datetime import datetime
 from typing import List, Dict, Union, Tuple, Optional, Any
 
@@ -86,24 +87,35 @@ def clear_zero_values(data: pd.DataFrame, features: List[str], logger: Optional[
     
     return data
 
-def normalize_data(data: Union[pd.DataFrame, np.ndarray]) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray], Union[pd.Series, np.ndarray]]:
+def normalize_data(data: Union[pd.DataFrame, np.ndarray], data_min: Optional[Union[pd.Series, np.ndarray, Dict]] = None, data_max: Optional[Union[pd.Series, np.ndarray, Dict]] = None) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray, Dict], Union[pd.Series, np.ndarray, Dict]]:
     """
     Normalize data to range [0, 1].
     
     Args:
         data: Input data (DataFrame or numpy array)
+        data_min: Optional minimum values for normalization (if None, calculated from data)
+        data_max: Optional maximum values for normalization (if None, calculated from data)
     
     Returns:
         Tuple of (normalized_data, min_values, max_values)
     """
-    if isinstance(data, pd.DataFrame):
-        data_min = data.min()
-        data_max = data.max()
-        normalized_data = (data - data_min) / (data_max - data_min)
-    else:  # For numpy arrays
-        data_min = np.min(data, axis=0)
-        data_max = np.max(data, axis=0)
-        normalized_data = (data - data_min) / (data_max - data_min)
+    if data_min is None or data_max is None:
+        # Calculate min and max from the data
+        if isinstance(data, pd.DataFrame):
+            data_min = data.min() if data_min is None else data_min
+            data_max = data.max() if data_max is None else data_max
+        else:  # For numpy arrays
+            data_min = np.min(data, axis=0) if data_min is None else data_min
+            data_max = np.max(data, axis=0) if data_max is None else data_max
+    
+    # Convert dictionary min/max values to Series if needed
+    if isinstance(data_min, dict) and isinstance(data, pd.DataFrame):
+        data_min = pd.Series(data_min)
+    if isinstance(data_max, dict) and isinstance(data, pd.DataFrame):
+        data_max = pd.Series(data_max)
+    
+    # Normalize using the provided or calculated min/max values
+    normalized_data = (data - data_min) / (data_max - data_min)
     
     return normalized_data, data_min, data_max
 
@@ -124,13 +136,14 @@ def prepare_sequence_data(input_data: pd.DataFrame, target_data: pd.DataFrame,
     X, y = [], []
     
     if shift > 0:
-        for i in range(len(input_data) - shift*2):
+        for i in range(len(input_data) - shift*2): #*2):
             X.append(input_data.iloc[i:i+shift].values)  # Past N days
-            y.append(target_data.iloc[i+shift:i+shift*2].values)  # Next N days
+            #y.append(target_data.iloc[i+shift:i+shift*2].values)  # Next N days
+            y.append(target_data.iloc[i+shift*2].values)  # Next N days
         
         X_sequence = np.array(X)
         y_sequence = np.array(y)
-        y_sequence = y_sequence.reshape((y_sequence.shape[0], y_sequence.shape[1]))  # (samples, time_steps)
+        #y_sequence = y_sequence.reshape((y_sequence.shape[0], y_sequence.shape[1]))  # (samples, time_steps)
     else:
         X_sequence = input_data.values
         y_sequence = target_data.values
@@ -272,3 +285,77 @@ def create_output_directories(target_feature: str) -> Dict[str, str]:
         os.makedirs(dir_path, exist_ok=True)
     
     return dirs
+
+def save_normalization_params(data_min: Union[pd.Series, np.ndarray], 
+                             data_max: Union[pd.Series, np.ndarray],
+                             model_dir: str,
+                             logger: Optional[logging.Logger] = None) -> str:
+    """
+    Save normalization parameters (min and max values) to a JSON file.
+    
+    Args:
+        data_min: Minimum values used for normalization
+        data_max: Maximum values used for normalization
+        model_dir: Directory where the model is saved
+        logger: Optional logger for logging information
+        
+    Returns:
+        Path to the saved normalization parameters file
+    """
+    # Convert numpy arrays or pandas Series to lists for JSON serialization
+    if isinstance(data_min, (np.ndarray, pd.Series)):
+        data_min_list = data_min.tolist() if isinstance(data_min, np.ndarray) else data_min.to_dict()
+    else:
+        data_min_list = data_min
+        
+    if isinstance(data_max, (np.ndarray, pd.Series)):
+        data_max_list = data_max.tolist() if isinstance(data_max, np.ndarray) else data_max.to_dict()
+    else:
+        data_max_list = data_max
+    
+    # Create normalization parameters dictionary
+    norm_params = {
+        'data_min': data_min_list,
+        'data_max': data_max_list
+    }
+    
+    # Save to JSON file in the same directory as the model
+    norm_params_path = os.path.join(model_dir, 'normalization_params.json')
+    with open(norm_params_path, 'w') as f:
+        json.dump(norm_params, f, indent=2)
+    
+    if logger:
+        logger.info(f"Normalization parameters saved to {norm_params_path}")
+    
+    return norm_params_path
+
+def load_normalization_params(model_dir: str, logger: Optional[logging.Logger] = None) -> Tuple[Union[pd.Series, dict], Union[pd.Series, dict]]:
+    """
+    Load normalization parameters (min and max values) from a JSON file.
+    
+    Args:
+        model_dir: Directory where the model is saved
+        logger: Optional logger for logging information
+        
+    Returns:
+        Tuple of (data_min, data_max) loaded from the file
+    """
+    # Construct the path to the normalization parameters file
+    norm_params_path = os.path.join(model_dir, 'normalization_params.json')
+    
+    if not os.path.exists(norm_params_path):
+        if logger:
+            logger.warning(f"Normalization parameters file not found at {norm_params_path}")
+        return None, None
+    
+    # Load from JSON file
+    with open(norm_params_path, 'r') as f:
+        norm_params = json.load(f)
+    
+    data_min = norm_params['data_min']
+    data_max = norm_params['data_max']
+    
+    if logger:
+        logger.info(f"Normalization parameters loaded from {norm_params_path}")
+    
+    return data_min, data_max
