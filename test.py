@@ -4,46 +4,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import os
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, Union
 
 from utils import (
+    setup_logging,
     clear_zero_values,
     normalize_data,
-    plot_predictions
+    prepare_sequence_data,
+    plot_predictions,
+    create_output_directories
 )
-
-def prepare_sequence_input_data(input_data: pd.DataFrame, target_data: pd.DataFrame, 
-                         shift: int, logger: Optional[logging.Logger] = None) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Prepare sequence data for RNN training/prediction.
-    
-    Args:
-        input_data: Input features DataFrame
-        target_data: Target features DataFrame
-        shift: Number of time steps to use for sequence
-        logger: Optional logger for logging information
-    
-    Returns:
-        X_sequence as numpy arrays
-    """
-    X = []
-    
-    if shift > 0:
-        for i in range(len(input_data) - shift*2):
-            X.append(input_data.iloc[i:i+shift].values)  # Past N days
-        
-        X_sequence = np.array(X)
-    else:
-        X_sequence = input_data.values
-        X_sequence = X_sequence.reshape((X_sequence.shape[0], 1, X_sequence.shape[1]))
-    
-    if logger:
-        logger.info(f"Sequence data shapes - X: {X_sequence.shape}")
-    
-    return X_sequence
 
 def load_and_prepare_data(config: Dict[str, Any], logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -63,7 +37,7 @@ def load_and_prepare_data(config: Dict[str, Any], logger: logging.Logger) -> Tup
     
     # Load dataset
     logger.info("Loading dataset...")
-    data = pd.read_csv('.\\csv\\S&P500.csv')#[-100:]
+    data = pd.read_csv('.\\csv\\S&P500.csv')
     data = data[[feat for feat in data.columns if feat != "Price" and feat != "Adj Close"]]
     logger.info(f"Dataset loaded with shape: {data.shape}")
     logger.info(f"Zero values per column: {(data==0).sum().to_dict()}")
@@ -92,6 +66,49 @@ def load_and_prepare_data(config: Dict[str, Any], logger: logging.Logger) -> Tup
     logger.info(f"Input shape: {input_data.shape}, Target shape: {target_data.shape}")
     
     return input_data, target_data, data
+
+def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray, logger: logging.Logger) -> Dict[str, float]:
+    """
+    Evaluate predictions using multiple metrics.
+    
+    Args:
+        y_true: True values
+        y_pred: Predicted values
+        logger: Logger for logging information
+        
+    Returns:
+        Dictionary of evaluation metrics
+    """
+    # Ensure we're using the first column if multi-dimensional
+    if len(y_true.shape) > 1 and y_true.shape[1] > 1:
+        y_true_eval = y_true[:, 0]
+    else:
+        y_true_eval = y_true.flatten() if len(y_true.shape) > 1 else y_true
+        
+    if len(y_pred.shape) > 1 and y_pred.shape[1] > 1:
+        y_pred_eval = y_pred[:, 0]
+    else:
+        y_pred_eval = y_pred.flatten() if len(y_pred.shape) > 1 else y_pred
+    
+    # Calculate metrics
+    mae = mean_absolute_error(y_true_eval, y_pred_eval)
+    mse = mean_squared_error(y_true_eval, y_pred_eval)
+    rmse = np.sqrt(mse)
+    mape = np.mean(np.abs((y_true_eval - y_pred_eval) / y_true_eval)) * 100
+    
+    # Log results
+    logger.info(f"Evaluation metrics:")
+    logger.info(f"  Mean Absolute Error (MAE): {mae:.4f}")
+    logger.info(f"  Mean Squared Error (MSE): {mse:.4f}")
+    logger.info(f"  Root Mean Squared Error (RMSE): {rmse:.4f}")
+    logger.info(f"  Mean Absolute Percentage Error (MAPE): {mape:.4f}%")
+    
+    return {
+        'mae': mae,
+        'mse': mse,
+        'rmse': rmse,
+        'mape': mape
+    }
 
 def create_prediction_directories(model_path: str, target_feature: str) -> Dict[str, str]:
     """
@@ -139,6 +156,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
     target_feature = config['data_preparation']['target_feature']
     days = config['data_preparation']['days']
     model_path = config['prediction']['model_path']
+    evaluate = config.get('prediction', {}).get('evaluate', False)
     
     # Create prediction directories in the model's parent folder
     output_dirs = create_prediction_directories(model_path, target_feature)
@@ -184,30 +202,40 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         input_data, target_data, original_data = load_and_prepare_data(config, logger)
         
         # Normalize the input data
-        # TODO: during train, save the input scaler (or input_min, input_max)
-        # and use it here to normalize the input data
         input_normalized, input_min, input_max = normalize_data(input_data)
         logger.info("Data normalized")
         
         # Prepare sequence data for prediction
         shift = days
-        X_sequence = prepare_sequence_input_data(input_normalized, target_data, shift, logger)
+        X_sequence, y_sequence = prepare_sequence_data(input_normalized, target_data, shift, logger)
         
         # Make predictions
         logger.info("Making predictions...")
         y_pred = model.predict(X_sequence)
         logger.info(f"Predictions shape: {y_pred.shape}")
         
+        # Evaluate predictions if requested
+        if evaluate:
+            metrics = evaluate_predictions(y_sequence, y_pred, logger)
+            
+            # Save metrics to file
+            metrics_path = os.path.join(output_dirs['results'], 'metrics.txt')
+            with open(metrics_path, 'w') as f:
+                for metric, value in metrics.items():
+                    f.write(f"{metric}: {value}\n")
+            logger.info(f"Metrics saved to {metrics_path}")
+        
         # Plot and save predictions
-        predictions_plot_path = os.path.join(output_dirs['plots'], 'predictions_real.png')
-        plot_predictions(y_pred, y_pred, target_feature, save_path=predictions_plot_path)
+        predictions_plot_path = os.path.join(output_dirs['plots'], 'predictions.png')
+        plot_predictions(y_sequence, y_pred, target_feature, save_path=predictions_plot_path)
         logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
         # Save predictions to CSV
         predictions_df = pd.DataFrame({
+            'actual': y_sequence[:, 0] if len(y_sequence.shape) > 1 else y_sequence,
             'predicted': y_pred[:, 0] if len(y_pred.shape) > 1 else y_pred
         })
-        predictions_csv_path = os.path.join(output_dirs['results'], 'predictions_real.csv')
+        predictions_csv_path = os.path.join(output_dirs['results'], 'predictions.csv')
         predictions_df.to_csv(predictions_csv_path, index=False)
         logger.info(f"Predictions saved to {predictions_csv_path}")
         

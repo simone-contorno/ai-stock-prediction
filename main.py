@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 from train import train_model
-from predict import predict_future
+from test import predict_future
 
 def main():
     # Parse command line arguments

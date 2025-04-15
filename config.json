@@ -31,7 +31,7 @@
       "csv_path": ".\\csv\\S&P500.csv"
     },
     "prediction": {
-      "model_path": ".\\models\\close\\best.keras",
+      "model_path": ".\\results\\close\\2025-04-15_15-56-01\\models\\2025-04-15_15-56-01_rnn_close_30.keras",
       "sample_size": 30,
       "evaluate": true
     }
