@@ -1,0 +1,39 @@
+{
+  "feature_prediction": {
+    "data_preparation": {
+      "features": ["Open", "Close"],
+      "target_feature": "Close",
+      "include_target": true,
+      "days": 30,
+      "shift": 30,
+      "csv_path": ".\\csv\\S&P500.csv"
+    },
+    "training": {
+      "test_size": 0.1,
+      "validation_split": 0.1,
+      "epochs": 1000,
+      "batch_size": 32,
+      "learning_rate": 0.001,
+      "patience": 50
+    },
+    "model": {
+      "lstm_units": 256,
+      "dropout_rate": 0.1,
+      "dense_units": 128
+    }
+  },
+  "target_prediction": {
+    "data_preparation": {
+      "features": ["Open", "Close"],
+      "target_feature": "Close",
+      "include_target": true,
+      "days": 30,
+      "csv_path": ".\\csv\\S&P500.csv"
+    },
+    "prediction": {
+      "model_path": ".\\models\\close\\best.keras",
+      "sample_size": 30,
+      "evaluate": true
+    }
+  }
+}
