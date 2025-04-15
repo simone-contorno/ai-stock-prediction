@@ -2,8 +2,8 @@ import yfinance as yf
 import pandas as pd
 
 # Config
-file_name = "Apple"
-ticker = "AAPL"
+file_name = "S&P500"
+ticker = "^GSPC"
 start_date = None
 end_date = None
 
