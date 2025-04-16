@@ -5,7 +5,6 @@
       "target_feature": "Close",
       "include_target": true,
       "days": 30,
-      "shift": 30,
       "csv_path": ".\\csv\\S&P500.csv"
     },
     "training": {
@@ -27,11 +26,10 @@
       "features": ["Open", "Close"],
       "target_feature": "Close",
       "include_target": true,
-      "days": 30,
       "csv_path": ".\\csv\\S&P500.csv"
     },
     "prediction": {
-      "model_path": ".\\results\\close\\2025-04-16_08-58-25\\models\\2025-04-16_08-58-25_rnn_close_30.keras",
+      "model_path": ".\\results\\close\\2025-04-16_15-58-29\\models\\2025-04-16_15-58-29_rnn_close_30.keras",
       "sample_size": 30,
       "evaluate": true
     }

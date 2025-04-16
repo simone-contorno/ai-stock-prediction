@@ -1,178 +1,68 @@
-# Recursive Neural Network for Feature Prediction in Market Stocks
+"""Training script for Stock Price Prediction RNN model."""
 
-import pandas as pd
-from keras.models import Sequential
-from keras.layers import Input, Dense, LSTM, Dropout, BatchNormalization
-from tensorflow.keras.initializers import GlorotUniform
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from tensorflow.keras import regularizers
+from tensorflow.keras.models import Sequential # type: ignore
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau # type: ignore
 from datetime import datetime
 import os
-import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-from utils import (
-    setup_logging,
-    clear_zero_values,
-    normalize_data,
-    prepare_sequence_data,
-    split_train_test,
-    plot_training_history,
-    plot_predictions,
-    save_normalization_params
+from src.utils import (
+    Logger,
+    Plotter,
+    DataPreprocessor,
+    DataLoader,
+    ModelEvaluator
 )
-
-def build_model(input_shape: tuple, output_shape: int, config: Dict[str, Any], 
-               logger: Optional[logging.Logger] = None) -> Sequential:
-    """
-    Build and compile the RNN model.
-    
-    Args:
-        input_shape: Shape of input data (time_steps, features)
-        output_shape: Shape of output data
-        config: Model configuration dictionary
-        logger: Logger for logging information
-        
-    Returns:
-        Compiled Keras Sequential model
-    """
-    # Extract model parameters from config
-    lstm_units = config['model'].get('lstm_units', 256)
-    dropout_rate = config['model'].get('dropout_rate', 0.0)
-    dense_units = config['model'].get('dense_units', 128)
-    learning_rate = config['training'].get('learning_rate', 0.001)
-    
-    if logger:
-        logger.info(f"Building model with LSTM units: {lstm_units}, Dense units: {dense_units}")
-    
-    # Create the RNN model
-    model = Sequential()
-    model.add(Input(input_shape))
-    
-    # LSTM layer
-    l2 = 0.001
-    model.add(LSTM(lstm_units, 
-                   activation='tanh', 
-                   kernel_initializer=GlorotUniform(), 
-                   kernel_regularizer=regularizers.l2(l2),
-                   recurrent_regularizer=regularizers.l2(l2),
-                   #bias_regularizer=regularizers.l2(l2),
-                   return_sequences=False))
-    
-    # Dropout for generalization
-    if dropout_rate > 0.0:
-        model.add(Dropout(dropout_rate))
-    
-    # Normalization and dense layers
-    model.add(BatchNormalization())
-    model.add(Dense(dense_units, 
-                    activation='relu', 
-                    kernel_regularizer=regularizers.l2(l2)))
-    
-    # Output layer
-    model.add(Dense(output_shape, 
-                    activation='linear'))
-    
-    # Compile the model
-    optimizer = Adam(learning_rate=learning_rate, clipnorm=1.0)
-    model.compile(optimizer=optimizer, loss='mae')
-    
-    if logger:
-        # Create a custom print function that handles Unicode characters
-        def safe_info(msg):
-            try:
-                logger.info(msg)
-            except UnicodeEncodeError:
-                # If Unicode error occurs, replace problematic characters
-                logger.info(msg.encode('ascii', 'replace').decode('ascii'))
-        
-        model.summary(print_fn=safe_info)
-    
-    return model
+from src.models.lstm_model import RNNModelBuilder
 
 def train_model(config: Dict[str, Any]) -> Sequential:
-    """
-    Train a RNN model for stock price prediction.
-    
-    Args:
-        config: Configuration dictionary with training parameters
-        
-    Returns:
-        Trained Keras model
-    """
+    """Train a RNN model for stock price prediction."""
     # Extract configuration parameters
     features = config['data_preparation']['features']
     target_feature = config['data_preparation']['target_feature']
-    include_target = config['data_preparation']['include_target']
     days = config['data_preparation']['days']
-    shift = config['data_preparation']['shift']
     test_size = config['training']['test_size']
     validation_split = config['training']['validation_split']
     epochs = config['training']['epochs']
     batch_size = config['training']['batch_size']
     patience = config['training']['patience']
     
-    # Setup logging and output directories
-    # Note: setup_logging now calls create_output_directories internally
-    logger = setup_logging(target_feature)
-    output_dirs = logger.output_dirs  # Access the output directories created during logging setup
+    # Setup logging - explicitly set is_training=True
+    logger = Logger.setup(target_feature, is_training=True)
+    output_dirs = logger.output_dirs
     
     logger.info("Starting model training with configuration:")
-    logger.info(f"Features: {features}, Target: {target_feature}, Shift: {shift} days")
+    logger.info(f"Features: {features}, Target: {target_feature}, Days: {days}")
     
-    # Load and prepare data
-    logger.info("Loading dataset...")
     try:
-        if days > 0:
-            data = pd.read_csv('.\\csv\\S&P500.csv')[:-days]
-        else:
-            data = pd.read_csv('.\\csv\\S&P500.csv')
+        # 1. Load raw data
+        data = DataLoader.load_raw_data(config, logger, days, is_training=True)
         
-        # Filter out Price and Adj Close columns
-        data = data[[feat for feat in data.columns if feat != "Price" and feat != "Adj Close"]]
-        logger.info(f"Dataset loaded with shape: {data.shape}")
+        # 2. Clear zero values from raw data
+        data = DataPreprocessor.clear_zero_values(data, features, logger)
         
-        # Clear zero values
-        data = clear_zero_values(data, features, logger)
+        # 3. Split into input and target features
+        input_data, target_data = DataLoader.prepare_features(data, config, logger)
         
-        # Log dataset statistics
-        logger.info("Dataset statistics:")
-        logger.info(data.describe().to_string())
-        
-        # Prepare input and target feature sets
-        if include_target:
-            input_features = features
-        else:
-            input_features = [feat for feat in features if feat != target_feature]
-            
-        target_features = [feat for feat in features if feat == target_feature]
-        logger.info(f"Input features: {input_features}")
-        logger.info(f"Target feature: {target_features}")
-        
-        # Create input and target datasets
-        input_data = data[input_features]
-        target_data = data[target_features]
-        
-        logger.info(f"Input shape: {input_data.shape}, Target shape: {target_data.shape}")
-        
-        # Normalize the input data
-        input_normalized, input_min, input_max = normalize_data(input_data)
+        # 4. Normalize input data
+        input_normalized, input_min, input_max = DataPreprocessor.normalize_data(input_data)
         logger.info("Data normalized")
         
         # Save normalization parameters
-        save_normalization_params(input_min, input_max, output_dirs['models'], logger)
+        DataLoader.save_normalization_params(input_min, input_max, output_dirs['models'], logger)
         
-        # Prepare sequence data for RNN
-        X_sequence, y_sequence = prepare_sequence_data(input_normalized, target_data, shift, logger)
+        # 5. Prepare sequence data for RNN
+        X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(
+            input_normalized, target_data, days, logger
+        )
         
-        # Split into training and test sets
-        X_train, X_test, y_train, y_test = split_train_test(
+        # 6. Split into training and test sets
+        X_train, X_test, y_train, y_test = DataPreprocessor.split_train_test(
             X_sequence, y_sequence, test_size, shuffle=True, random_state=3, logger=logger
         )
         
-        # Build the model
-        model = build_model(
+        # Build the model using RNNModelBuilder
+        model = RNNModelBuilder.build(
             input_shape=(X_train.shape[1], X_train.shape[2]),
             output_shape=y_train.shape[1],
             config=config,
@@ -231,7 +121,7 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         
         # Plot and save training history
         history_plot_path = os.path.join(output_dirs['plots'], 'training_history.png')
-        plot_training_history(history.history, save_path=history_plot_path)
+        Plotter.plot_training_history(history.history, save_path=history_plot_path)
         logger.info(f"Training history plot saved to {history_plot_path}")
         
         # Evaluate the model on test data
@@ -240,15 +130,15 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         
         # Plot and save predictions
         predictions_plot_path = os.path.join(output_dirs['plots'], 'predictions.png')
-        plot_predictions(y_test, y_pred, target_features[0], save_path=predictions_plot_path)
+        Plotter.plot_predictions(y_test, y_pred, features[0], save_path=predictions_plot_path)
         logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
+        # Evaluate predictions
+        ModelEvaluator.evaluate_predictions(y_test, y_pred, logger)
+        
         # Save the model
-        # Use a consistent naming without timestamp since all files are already in a timestamped folder
-        # get the parent output_dirs['models']
-        parent_output_dir = os.path.dirname(output_dirs['models'])
-        parent_folder_name = os.path.basename(parent_output_dir)
-        model_filename = f"{parent_folder_name}_rnn_{target_features[0].lower()}_{shift}.keras"
+        parent_folder_name = os.path.basename(output_dirs['results'])
+        model_filename = f"{parent_folder_name}_rnn_{target_feature.lower()}_{days}.keras"
         model_path = os.path.join(output_dirs['models'], model_filename)
         model.save(model_path)
         logger.info(f"Model saved to {model_path}")
