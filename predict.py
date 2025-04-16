@@ -33,7 +33,7 @@ def prepare_sequence_input_data(input_data: pd.DataFrame, target_data: pd.DataFr
     X = []
     
     if shift > 0:
-        for i in range(len(input_data) - shift*2):
+        for i in range(len(input_data) - shift):
             X.append(input_data.iloc[i:i+shift].values)  # Past N days
         
         X_sequence = np.array(X)

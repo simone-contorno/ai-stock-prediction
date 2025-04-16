@@ -136,10 +136,10 @@ def prepare_sequence_data(input_data: pd.DataFrame, target_data: pd.DataFrame,
     X, y = [], []
     
     if shift > 0:
-        for i in range(len(input_data) - shift*2): #*2):
+        for i in range(len(input_data) - shift): #*2):
             X.append(input_data.iloc[i:i+shift].values)  # Past N days
             #y.append(target_data.iloc[i+shift:i+shift*2].values)  # Next N days
-            y.append(target_data.iloc[i+shift*2].values)  # Next N days
+            y.append(target_data.iloc[i+shift].values)  # Next N days
         
         X_sequence = np.array(X)
         y_sequence = np.array(y)
