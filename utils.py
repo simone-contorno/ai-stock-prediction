@@ -136,14 +136,12 @@ def prepare_sequence_data(input_data: pd.DataFrame, target_data: pd.DataFrame,
     X, y = [], []
     
     if shift > 0:
-        for i in range(len(input_data) - shift): #*2):
+        for i in range(len(input_data) - shift*2):
             X.append(input_data.iloc[i:i+shift].values)  # Past N days
-            #y.append(target_data.iloc[i+shift:i+shift*2].values)  # Next N days
-            y.append(target_data.iloc[i+shift].values)  # Next N days
+            y.append(target_data.iloc[i+shift*2].values)  # Next N days
         
         X_sequence = np.array(X)
         y_sequence = np.array(y)
-        #y_sequence = y_sequence.reshape((y_sequence.shape[0], y_sequence.shape[1]))  # (samples, time_steps)
     else:
         X_sequence = input_data.values
         y_sequence = target_data.values
@@ -379,7 +377,7 @@ def load_and_prepare_data(config: Dict[str, Any], logger: logging.Logger, days: 
     
     # Load dataset
     logger.info("Loading dataset...")
-    data = pd.read_csv('.\\csv\\S&P500.csv')[-days:]
+    data = pd.read_csv('.\\csv\\S&P500.csv')[-days*2:]
     data = data[[feat for feat in data.columns if feat != "Price" and feat != "Adj Close"]]
     logger.info(f"Dataset loaded with shape: {data.shape}")
     logger.info(f"Zero values per column: {(data==0).sum().to_dict()}")

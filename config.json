@@ -18,7 +18,7 @@
     },
     "model": {
       "lstm_units": 256,
-      "dropout_rate": 0.0,
+      "dropout_rate": 0.1,
       "dense_units": 128
     }
   },

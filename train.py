@@ -1,13 +1,12 @@
 # Recursive Neural Network for Feature Prediction in Market Stocks
 
 import pandas as pd
-import numpy as np
 from keras.models import Sequential
 from keras.layers import Input, Dense, LSTM, Dropout, BatchNormalization
 from tensorflow.keras.initializers import GlorotUniform
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-import matplotlib.pyplot as plt
+from tensorflow.keras import regularizers
 from datetime import datetime
 import os
 import logging
@@ -21,7 +20,6 @@ from utils import (
     split_train_test,
     plot_training_history,
     plot_predictions,
-    create_output_directories,
     save_normalization_params
 )
 
@@ -53,16 +51,28 @@ def build_model(input_shape: tuple, output_shape: int, config: Dict[str, Any],
     model.add(Input(input_shape))
     
     # LSTM layer
-    model.add(LSTM(lstm_units, activation='tanh', kernel_initializer=GlorotUniform(), return_sequences=False))
+    l2 = 0.001
+    model.add(LSTM(lstm_units, 
+                   activation='tanh', 
+                   kernel_initializer=GlorotUniform(), 
+                   kernel_regularizer=regularizers.l2(l2),
+                   recurrent_regularizer=regularizers.l2(l2),
+                   #bias_regularizer=regularizers.l2(l2),
+                   return_sequences=False))
     
-    # Uncomment for deeper network if needed
+    # Dropout for generalization
     if dropout_rate > 0.0:
         model.add(Dropout(dropout_rate))
     
     # Normalization and dense layers
     model.add(BatchNormalization())
-    model.add(Dense(dense_units, activation='relu'))
-    model.add(Dense(output_shape, activation='linear'))
+    model.add(Dense(dense_units, 
+                    activation='relu', 
+                    kernel_regularizer=regularizers.l2(l2)))
+    
+    # Output layer
+    model.add(Dense(output_shape, 
+                    activation='linear'))
     
     # Compile the model
     optimizer = Adam(learning_rate=learning_rate, clipnorm=1.0)
