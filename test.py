@@ -2,71 +2,20 @@
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import os
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional, Tuple, Union
+from typing import Dict, Any
 
 from utils import (
-    setup_logging,
-    clear_zero_values,
     normalize_data,
     prepare_sequence_data,
     plot_predictions,
-    create_output_directories,
-    load_normalization_params
+    load_normalization_params,
+    load_and_prepare_data
 )
-
-def load_and_prepare_data(config: Dict[str, Any], logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """
-    Load and prepare data for prediction.
-    
-    Args:
-        config: Configuration dictionary
-        logger: Logger for logging information
-        
-    Returns:
-        Tuple of (input_data, target_data, original_data)
-    """
-    # Extract configuration parameters
-    features = config['data_preparation']['features']
-    target_feature = config['data_preparation']['target_feature']
-    include_target = config['data_preparation']['include_target']
-    
-    # Load dataset
-    logger.info("Loading dataset...")
-    data = pd.read_csv('.\\csv\\S&P500.csv')
-    data = data[[feat for feat in data.columns if feat != "Price" and feat != "Adj Close"]]
-    logger.info(f"Dataset loaded with shape: {data.shape}")
-    logger.info(f"Zero values per column: {(data==0).sum().to_dict()}")
-    
-    # Clear zero values
-    data = clear_zero_values(data, features, logger)
-    
-    # Log dataset statistics
-    logger.info("Dataset statistics:")
-    logger.info(data.describe().to_string())
-    
-    # Prepare input and target feature sets
-    if include_target:
-        input_features = features
-    else:
-        input_features = [feat for feat in features if feat != target_feature]
-        
-    target_features = [feat for feat in features if feat == target_feature]
-    logger.info(f"Input features: {input_features}")
-    logger.info(f"Target feature: {target_features}")
-    
-    # Create input and target datasets
-    input_data = data[input_features]
-    target_data = data[target_features]
-    
-    logger.info(f"Input shape: {input_data.shape}, Target shape: {target_data.shape}")
-    
-    return input_data, target_data, data
 
 def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray, logger: logging.Logger) -> Dict[str, float]:
     """
@@ -200,7 +149,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Model loaded successfully")
         
         # Load and prepare data
-        input_data, target_data, original_data = load_and_prepare_data(config, logger)
+        input_data, target_data, _ = load_and_prepare_data(config, logger, days*2)
         
         # Load normalization parameters from the model directory
         model_dir = os.path.dirname(os.path.abspath(model_path))
@@ -212,7 +161,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
             input_normalized, _, _ = normalize_data(input_data, data_min, data_max)
         else:
             logger.warning("Saved normalization parameters not found, calculating from current data")
-            input_normalized, input_min, input_max = normalize_data(input_data)
+            input_normalized, _, _ = normalize_data(input_data)
         logger.info("Data normalized")
         
         # Prepare sequence data for prediction
@@ -238,6 +187,12 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         # Plot and save predictions
         predictions_plot_path = os.path.join(output_dirs['plots'], 'predictions.png')
         plot_predictions(y_sequence, y_pred, target_feature, save_path=predictions_plot_path)
+        logger.info(f"Predictions plot saved to {predictions_plot_path}")
+
+        # Plot and save predictions with offset 
+        predictions_plot_path = os.path.join(output_dirs['plots'], 'predictions_offset.png')
+        y_pred_offset = y_pred + (y_pred[0] - y_sequence[0]) if y_pred[0] > y_sequence[0] else y_pred + (y_sequence[0] - y_pred[0])
+        plot_predictions(y_sequence, y_pred_offset, target_feature, save_path=predictions_plot_path)
         logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
         # Save predictions to CSV
