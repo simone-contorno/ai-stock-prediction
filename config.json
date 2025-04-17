@@ -5,7 +5,8 @@
 		"results_path": ".\\results",
 		"input_features": [
 			"Open",
-			"Close"
+			"Close",
+			"Volume"
 		],
 		"target_feature": "Close",
 		"days": 30
@@ -13,7 +14,7 @@
     "training": {
 		"test_size": 0.1,
 		"validation_split": 0.1,
-		"epochs": 500,
+		"epochs": 1000,
 		"batch_size": 32,
 		"learning_rate": 0.001,
 		"patience": {
