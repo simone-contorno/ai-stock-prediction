@@ -1,37 +1,39 @@
 {
-  "feature_prediction": {
-    "data_preparation": {
-      "features": ["Open", "Close"],
-      "target_feature": "Close",
-      "include_target": true,
-      "days": 30,
-      "csv_path": ".\\csv\\S&P500.csv"
-    },
+	"general": {
+		"random_seed": 42,
+		"csv_path": ".\\csv\\S&P500.csv",
+		"results_path": ".\\results",
+		"input_features": [
+			"Open",
+			"Close"
+		],
+		"target_feature": "Close",
+		"days": 30
+	},
     "training": {
-      "test_size": 0.1,
-      "validation_split": 0.1,
-      "epochs": 1000,
-      "batch_size": 32,
-      "learning_rate": 0.001,
-      "patience": 50
-    },
-    "model": {
-      "lstm_units": 256,
-      "dropout_rate": 0.1,
-      "dense_units": 128
-    }
-  },
-  "target_prediction": {
-    "data_preparation": {
-      "features": ["Open", "Close"],
-      "target_feature": "Close",
-      "include_target": true,
-      "csv_path": ".\\csv\\S&P500.csv"
+		"test_size": 0.1,
+		"validation_split": 0.1,
+		"epochs": 500,
+		"batch_size": 32,
+		"learning_rate": 0.001,
+		"patience": {
+			"early_stopping": 50,
+			"learning_rate_reduction": 10
+		}, 
+        "model": {
+            "lstm_units": 256,
+            "dropout_rate": 0.1,
+            "dense_units": 128
+        },
+		"verbose": {
+			"fit": 1,
+			"early_stopping": 1,
+			"learning_rate_reduction": 1
+		},
+		"save_model": true
     },
     "prediction": {
-      "model_path": ".\\results\\close\\2025-04-16_15-58-29\\models\\2025-04-16_15-58-29_rnn_close_30.keras",
-      "sample_size": 30,
-      "evaluate": true
+		"model_path": ".\\results\\close\\2025-04-16_15-58-29\\models\\2025-04-16_15-58-29_rnn_close_30.keras",
+		"evaluate": true
     }
-  }
 }

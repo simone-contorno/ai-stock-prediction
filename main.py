@@ -1,39 +1,46 @@
 # Stock Price Prediction - Main Script
 
+import os
+
+# Disable oneDNN optimizations for TensorFlow
+# This is a workaround for a known issue with TensorFlow and oneDNN optimizations
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
 import argparse
 import json
-import os
-from train import train_model
-from test import predict_future
+from src.train import train_model
+from src.test import test_model
+from src.predict import predict_future
 
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Stock Price Prediction using RNN')
-    parser.add_argument('--mode', type=str, choices=['train', 'predict'], required=True,
-                        help='Mode: train a new model or predict using existing model')
-    parser.add_argument('--type', type=str, choices=['feature', 'target'], required=True,
-                        help='Type: feature prediction or target prediction')
-    parser.add_argument('--config', type=str, default='config.json',
-                        help='Path to configuration file')
+    parser.add_argument('--mode', type=str, choices=['train', 'test', 'predict'], required=True,
+                        help='Mode: train a new model, test an existing model, or make future predictions')
     args = parser.parse_args()
     
     # Load configuration
-    with open(args.config, 'r') as f:
+    with open('config.json', 'r') as f:
         config = json.load(f)
     
     # Execute based on mode and type
-    if args.mode == 'train' and args.type == 'feature':
-        print("Training feature prediction model...")
-        model = train_model(config['feature_prediction'])
+    if args.mode == 'train':
+        print("Training model...")
+        train_model(config)
         print("Training completed.")
     
-    elif args.mode == 'predict' and args.type == 'target':
-        print("Making predictions using target prediction model...")
-        predictions = predict_future(config['target_prediction'])
+    elif args.mode == 'test':
+        print("Testing model...")
+        test_model(config)
+        print("Testing completed.")
+    
+    elif args.mode == 'predict':
+        print("Predicting future values...")
+        predict_future(config)
         print("Prediction completed.")
     
     else:
-        print(f"The combination of mode={args.mode} and type={args.type} is not supported yet.")
+        print(f"Mode not recognized: {args.mode}. Please use 'train', 'test', or 'predict'.")
 
 if __name__ == "__main__":
     main()

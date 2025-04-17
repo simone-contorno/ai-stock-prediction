@@ -7,7 +7,7 @@ This project implements Recursive Neural Networks (RNN) for stock price predicti
 
 ## Project Structure
 
-- `rnn_feature_prediction.py`: Script for training RNN models to predict stock features
+- `rnn_training.py`: Script for training RNN models to predict stock features
 - `rnn_target_prediction.py`: Script for making predictions using trained models
 - `config.json`: Configuration file containing parameters for both prediction types
 - `main.py`: Command-line interface for running the prediction models

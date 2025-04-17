@@ -5,7 +5,7 @@ import numpy as np
 import json
 import os
 import logging
-from typing import Dict, Tuple, Union, Optional, Any, List
+from typing import Dict, Tuple, Union, Optional, Any
 
 class DataLoader:
     @staticmethod
@@ -23,7 +23,7 @@ class DataLoader:
         Returns:
             Raw DataFrame with all columns
         """
-        csv_path = config['data_preparation'].get('csv_path', '.\\csv\\S&P500.csv')
+        csv_path = config['general'].get('csv_path', '.\\csv\\S&P500.csv')
         
         # Load dataset
         logger.info("Loading dataset...")
@@ -54,23 +54,16 @@ class DataLoader:
         Returns:
             Tuple of (input_data, target_data)
         """
-        features = config['data_preparation']['features']
-        target_feature = config['data_preparation']['target_feature']
-        include_target = config['data_preparation']['include_target']
+        input_features = [feat for feat in config['general']['input_features']]
+        target_feature = [config['general']['target_feature']]
         
-        # Prepare input and target feature sets
-        if include_target:
-            input_features = features
-        else:
-            input_features = [feat for feat in features if feat != target_feature]
-            
-        target_features = [feat for feat in features if feat == target_feature]
+
         logger.info(f"Input features: {input_features}")
-        logger.info(f"Target feature: {target_features}")
+        logger.info(f"Target feature: {target_feature}")
         
         # Create input and target datasets
         input_data = data[input_features]
-        target_data = data[target_features]
+        target_data = data[target_feature]
         
         logger.info(f"Input shape: {input_data.shape}, Target shape: {target_data.shape}")
         

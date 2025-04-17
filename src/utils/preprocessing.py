@@ -96,13 +96,13 @@ class DataPreprocessor:
         if shift > 0:
             for i in range(len(input_data) - shift*2):
                 X.append(input_data.iloc[i:i+shift].values)  # Past N days
-                y.append(target_data.iloc[i+shift*2].values)  # Next N days
+                y.append(target_data.iloc[i+shift*2])  # Next N days
             
             X_sequence = np.array(X)
             y_sequence = np.array(y)
         else:
             X_sequence = input_data.values
-            y_sequence = target_data.values
+            y_sequence = target_data
             X_sequence = X_sequence.reshape((X_sequence.shape[0], 1, X_sequence.shape[1]))
         
         if logger:
