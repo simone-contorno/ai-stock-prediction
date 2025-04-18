@@ -1,4 +1,4 @@
-"""Training script for Stock Price Prediction RNN model."""
+""" Training script for Stock Price Prediction model. """
 
 import os
 
@@ -9,6 +9,7 @@ from tensorflow.keras.models import Sequential # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau # type: ignore
 from datetime import datetime
 from typing import Dict, Any
+from sklearn.model_selection import train_test_split 
 
 from src.utils import (
     Logger,
@@ -21,13 +22,13 @@ from src.models.lstm_model import LSTModelBuilder
 
 def train_model(config: Dict[str, Any]) -> Sequential:
     """
-    Train a LSTM model for stock price prediction.
+    Train a model for stock price prediction.
     
     Args:
         config (dict): Configuration parameters for training.
         
     Returns:
-        Sequential: Trained LSTM model.
+        Sequential: Trained model.
     """
 
     # Extract configuration parameters
@@ -42,6 +43,10 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     verbose = config['training']['verbose']
     save_model = config['training']['save_model']
     random_seed = config['general']['random_seed']
+    shuffle = config['training']['shuffle']
+    restore_best_weights = config['training']['restore_best_weights']
+    learning_rate_reduction = config['training']['learning_rate_reduction']
+    learning_rate_min = config['training']['learning_rate_min']
     
     # Set the random seed for reproducibility
     np.random.seed(random_seed)
@@ -55,31 +60,34 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     logger.info(f"Features: {input_features}, Target: {target_feature}, Days: {days}")
     
     try:
-        # 1. Load raw data
-        data = DataLoader.load_raw_data(config, logger, days, is_training=True)
+        # Load raw data
+        data = DataLoader.load_raw_data(config, logger, is_training=True)
         
-        # 2. Clear zero values from raw data
-        data = DataPreprocessor.clear_zero_values(data, input_features, logger)
+        # Clear zero values from raw data
+        data = DataPreprocessor.clear_zero_values(data, logger)
         
-        # 3. Split into input and target features
+        # Split into input and target features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)
         
-        # 4. Normalize input data
+        # Normalize input data
         input_normalized, input_min, input_max = DataPreprocessor.normalize_data(input_data)
-        logger.info("Data normalized")
+        logger.info(f"Data normalized:\n {input_normalized.describe()}")
         
         # Save normalization parameters
         DataLoader.save_normalization_params(input_min, input_max, output_dirs['models'], logger)
         
-        # 5. Prepare sequence data for LSTM
+        
+        # Prepare sequence data for LSTM
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(
             input_normalized, target_data, days, logger
         )
         
         # 6. Split into training and test sets
         X_train, X_test, y_train, y_test = DataPreprocessor.split_train_test(
-            X_sequence, y_sequence, test_size, shuffle=True, random_state=random_seed, logger=logger
+            X_sequence, y_sequence, test_size, shuffle=shuffle, random_state=random_seed, logger=logger
         )
+
+        logger.info(f"Train-test split --> X_train: {X_train.shape}, y_train: {y_train.shape}, X_test: {X_test.shape}, y_test: {y_test.shape}")
         
         # Build the model using LSTModelBuilder
         model = LSTModelBuilder.build(
@@ -93,16 +101,16 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         early_stopping = EarlyStopping(
             monitor='val_loss',
             patience=patience['early_stopping'],
-            restore_best_weights=True,
             verbose=verbose['early_stopping'],
+            restore_best_weights=restore_best_weights
         )
         
         learning_rate_reduction = ReduceLROnPlateau(
             monitor='loss',
-            patience=[patience['learning_rate_reduction']],
+            patience=patience['learning_rate_reduction'],
             verbose=verbose['learning_rate_reduction'],
-            factor=0.5,
-            min_lr=0.0001
+            factor=learning_rate_reduction,
+            min_lr=learning_rate_min
         )
         
         # Train the model

@@ -22,8 +22,8 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
     
     # Extract days from model filename
     import re
-    days_match = re.search(r'_rnn_\w+_(\d+)\.keras$', model_path)
-    days = int(days_match.group(1)) if days_match else 30  # Default to 30 if not found
+    days_match = re.search(r'_lstm_\w+_(\d+)\.keras$', model_path)
+    days = int(days_match.group(1)) if days_match else config['general']['days']  # Default to days if not found
     
     # Setup logging with 'predict' subfolder
     logger = Logger.setup(target_feature, is_training=False, model_path=model_path, subfolder_name='predict')
@@ -39,10 +39,10 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Model loaded successfully")
         
         # 1. Load raw data
-        data = DataLoader.load_raw_data(config, logger, days, is_training=False)
+        data = DataLoader.load_raw_data(config, logger, is_training=False)
         
         # 2. Clear zero values from raw data
-        data = DataPreprocessor.clear_zero_values(data, config['general']['input_features'], logger)
+        data = DataPreprocessor.clear_zero_values(data, logger)
         
         # 3. Split into input and target features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)
@@ -61,7 +61,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Data normalized")
         
         # 5. Prepare sequence data for prediction
-        X_sequence = DataPreprocessor.prepare_sequence_input_data(input_normalized, target_data, days, logger)
+        X_sequence = DataPreprocessor.prepare_sequence_input_data(input_normalized, days, logger)
         
         # Make predictions
         logger.info("Making predictions...")

@@ -5,6 +5,7 @@ import os
 # Disable oneDNN optimizations for TensorFlow
 # This is a workaround for a known issue with TensorFlow and oneDNN optimizations
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 import argparse
 import json

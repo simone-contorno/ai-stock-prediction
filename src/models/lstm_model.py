@@ -3,7 +3,7 @@
 from tensorflow.keras.models import Sequential # type: ignore
 from tensorflow.keras.layers import Input, Dense, LSTM, Dropout, BatchNormalization # type: ignore
 from tensorflow.keras.initializers import GlorotUniform # type: ignore
-from tensorflow.keras.optimizers import Adam # type: ignore
+from tensorflow.keras.optimizers import Adam, SGD # type: ignore
 from tensorflow.keras import regularizers # type: ignore
 from typing import Dict, Any, Optional
 import logging
@@ -29,6 +29,13 @@ class LSTModelBuilder:
         dropout_rate = config['training']['model']['dropout_rate']
         dense_units = config['training']['model']['dense_units']
         learning_rate = config['training']['learning_rate']
+        l2_reg = config['training']['model']['l2_reg']
+        lstm_activation = config['training']['model']['lstm_activation']
+        dense_activation = config['training']['model']['dense_activation']
+        optimizer = config['training']['model']['optimizer']
+        clipnorm = config['training']['model']['clipnorm']
+        momentum = config['training']['model']['momentum']
+        loss = config['training']['model']['loss']
         
         if logger:
             logger.info(f"Building model with LSTM units: {lstm_units}, Dense units: {dense_units}")
@@ -38,12 +45,11 @@ class LSTModelBuilder:
         model.add(Input(input_shape))
         
         # LSTM layer
-        l2 = 0.001
         model.add(LSTM(lstm_units, 
-                      activation='tanh', 
+                      activation=lstm_activation, 
                       kernel_initializer=GlorotUniform(), 
-                      kernel_regularizer=regularizers.l2(l2),
-                      recurrent_regularizer=regularizers.l2(l2),
+                      kernel_regularizer=regularizers.l2(l2_reg),
+                      recurrent_regularizer=regularizers.l2(l2_reg),
                       return_sequences=False))
         
         # Dropout for generalization
@@ -53,16 +59,23 @@ class LSTModelBuilder:
         # Normalization and dense layers
         model.add(BatchNormalization())
         model.add(Dense(dense_units, 
-                       activation='relu', 
-                       kernel_regularizer=regularizers.l2(l2)))
+                       activation=dense_activation, 
+                       kernel_regularizer=regularizers.l2(l2_reg)))
         
         # Output layer
         model.add(Dense(output_shape, 
                        activation='linear'))
         
         # Compile the model
-        optimizer = Adam(learning_rate=learning_rate, clipnorm=1.0)
-        model.compile(optimizer=optimizer, loss='mae')
+        if optimizer.lower() == 'adam':
+            optimizer = Adam(learning_rate=learning_rate, clipnorm=clipnorm)
+            logger.info(f"Using Adam optimizer with learning rate: {learning_rate}")
+        elif optimizer.lower() == 'sgd':
+            optimizer = SGD(learning_rate=learning_rate, clipnorm=clipnorm, momentum=momentum)
+            logger.info(f"Using SGD optimizer with learning rate: {learning_rate}, momentum: {momentum}")
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer}. Use 'adam' or 'sgd'.")
+        model.compile(optimizer=optimizer, loss=loss)
         
         if logger:
             model.summary(print_fn=logger.info)

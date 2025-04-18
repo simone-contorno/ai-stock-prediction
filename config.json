@@ -17,14 +17,25 @@
 		"epochs": 1000,
 		"batch_size": 32,
 		"learning_rate": 0.001,
+		"learning_rate_reduction": 0.5,
+		"learning_rate_min": 0.0001,
+		"restore_best_weights": true,
+		"shuffle": true,
 		"patience": {
 			"early_stopping": 50,
-			"learning_rate_reduction": 10
+			"learning_rate_reduction": 25
 		}, 
         "model": {
             "lstm_units": 256,
             "dropout_rate": 0.1,
-            "dense_units": 128
+            "dense_units": 128,
+			"l2_reg": 0.001,
+			"lstm_activation": "tanh",
+			"dense_activation": "relu",
+			"loss": "mae",
+			"optimizer": "adam",
+			"clipnorm": 1.0,
+			"momentum": 0.9
         },
 		"verbose": {
 			"fit": 1,
@@ -34,7 +45,7 @@
 		"save_model": true
     },
     "prediction": {
-		"model_path": ".\\results\\close\\2025-04-16_15-58-29\\models\\2025-04-16_15-58-29_rnn_close_30.keras",
+		"model_path": ".\\results\\close\\2025-04-18_13-30-27\\models\\2025-04-18_13-30-27_lstm_close_30.keras",
 		"evaluate": true
     }
 }

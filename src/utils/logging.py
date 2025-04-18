@@ -1,4 +1,4 @@
-"""Logging utility for stock prediction."""
+""" Logging utility for stock prediction. """
 
 import logging
 import os

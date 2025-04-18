@@ -1,4 +1,4 @@
-"""Data loading and saving utilities for stock prediction."""
+""" Data loading and saving utilities for stock prediction. """
 
 import pandas as pd
 import numpy as np
@@ -9,8 +9,7 @@ from typing import Dict, Tuple, Union, Optional, Any
 
 class DataLoader:
     @staticmethod
-    def load_raw_data(config: Dict[str, Any], logger: logging.Logger, days: int, 
-                     is_training: bool = False) -> pd.DataFrame:
+    def load_raw_data(config: Dict[str, Any], logger: logging.Logger, is_training: bool = False) -> pd.DataFrame:
         """
         Load raw data from CSV file.
         
@@ -23,18 +22,22 @@ class DataLoader:
         Returns:
             Raw DataFrame with all columns
         """
-        csv_path = config['general'].get('csv_path', '.\\csv\\S&P500.csv')
+
+        csv_path = config['general']['csv_path']
+        test_size = config['training']['test_size']
+
+        input_features = [feat for feat in config['general']['input_features']]
+        target_feature = [config['general']['target_feature']]
         
         # Load dataset
         logger.info("Loading dataset...")
-        if is_training:
-            # For training, load all data
-            data = pd.read_csv(csv_path)
-        else:
-            # For prediction/testing, load only last N days
-            data = pd.read_csv(csv_path)[-days*2:]
+        data = pd.read_csv(csv_path)
+
+        # For prediction/testing, load only the test size
+        if is_training == False:
+            data = data[-int(len(data)*test_size):]
             
-        data = data[[feat for feat in data.columns if feat != "Price" and feat != "Adj Close"]]
+        data = data[[feat for feat in data.columns if feat in input_features or feat in target_feature]]
         logger.info(f"Dataset loaded with shape: {data.shape}")
         logger.info(f"Zero values per column: {(data==0).sum().to_dict()}")
         
@@ -54,9 +57,9 @@ class DataLoader:
         Returns:
             Tuple of (input_data, target_data)
         """
+
         input_features = [feat for feat in config['general']['input_features']]
         target_feature = [config['general']['target_feature']]
-        
 
         logger.info(f"Input features: {input_features}")
         logger.info(f"Target feature: {target_feature}")

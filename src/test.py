@@ -28,8 +28,8 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
     
     # Extract days from model filename
     import re
-    days_match = re.search(r'_rnn_\w+_(\d+)\.keras$', model_path)
-    days = int(days_match.group(1)) if days_match else 30  # Default to 30 if not found
+    days_match = re.search(r'_lstm_\w+_(\d+)\.keras$', model_path)
+    days = int(days_match.group(1)) if days_match else config['general']['days']  # Default to days if not found
     
     # Setup logging with 'test' subfolder
     logger = Logger.setup(target_feature, is_training=False, model_path=model_path, subfolder_name='test')
@@ -44,13 +44,13 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         model = load_model(model_path)
         logger.info("Model loaded successfully")
         
-        # 1. Load raw data
-        data = DataLoader.load_raw_data(config, logger, days*2, is_training=False)
+        # Load raw data
+        data = DataLoader.load_raw_data(config, logger, is_training=False)
         
-        # 2. Clear zero values from raw data
-        data = DataPreprocessor.clear_zero_values(data, config['general']['input_features'], logger)
+        # Clear zero values from raw data
+        data = DataPreprocessor.clear_zero_values(data, logger)
         
-        # 3. Split into input and target features
+        # Split into input and target features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)
         
         # Load normalization parameters from the model directory
@@ -64,7 +64,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         else:
             logger.warning("Saved normalization parameters not found, calculating from current data")
             input_normalized, _, _ = DataPreprocessor.normalize_data(input_data)
-        logger.info("Data normalized")
+        logger.info(f"Data normalized:\n {input_normalized.describe()}")
         
         # 5. Prepare sequence data for prediction
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(input_normalized, target_data, days, logger)
@@ -86,29 +86,29 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
             logger.info(f"Metrics saved to {metrics_path}")
         
         # Plot and save predictions
-        predictions_plot_path = os.path.join(logger.output_dirs['plots'], 'predictions.png')
-        Plotter.plot_predictions(y_sequence, y_pred, target_feature, save_path=predictions_plot_path)
-        logger.info(f"Predictions plot saved to {predictions_plot_path}")
+        test_plot_path = os.path.join(logger.output_dirs['plots'], 'test.png')
+        Plotter.plot_predictions(y_sequence, y_pred, target_feature, save_path=test_plot_path)
+        logger.info(f"Test plot saved to {test_plot_path}")
 
         # Plot and save predictions with offset 
-        predictions_plot_path = os.path.join(logger.output_dirs['plots'], 'predictions_offset.png')
+        test_plot_path = os.path.join(logger.output_dirs['plots'], 'test_offset.png')
         y_pred_offset = y_pred + (y_pred[0] - y_sequence[0]) if y_pred[0] > y_sequence[0] else y_pred + (y_sequence[0] - y_pred[0])
-        Plotter.plot_predictions(y_sequence, y_pred_offset, target_feature, save_path=predictions_plot_path)
-        logger.info(f"Predictions plot saved to {predictions_plot_path}")
+        Plotter.plot_predictions(y_sequence, y_pred_offset, target_feature, save_path=test_plot_path)
+        logger.info(f"Test plot saved to {test_plot_path}")
         
         # Save predictions to CSV
         predictions_df = pd.DataFrame({
             'actual': y_sequence[:, 0] if len(y_sequence.shape) > 1 else y_sequence,
             'predicted': y_pred[:, 0] if len(y_pred.shape) > 1 else y_pred
         })
-        predictions_csv_path = os.path.join(logger.output_dirs['results'], 'predictions.csv')
+        predictions_csv_path = os.path.join(logger.output_dirs['results'], 'test.csv')
         predictions_df.to_csv(predictions_csv_path, index=False)
-        logger.info(f"Predictions saved to {predictions_csv_path}")
+        logger.info(f"Test predictions saved to {predictions_csv_path}")
         
         return y_pred
         
     except Exception as e:
-        logger.error(f"Error during prediction: {str(e)}", exc_info=True)
+        logger.error(f"Error during testing: {str(e)}", exc_info=True)
         raise
 
 if __name__ == "__main__":
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         
         # Make predictions using the configuration
         predictions = test_model(config)
-        print("Prediction completed successfully!")
+        print("Testing completed successfully!")
         
     except Exception as e:
         print(f"Error: {str(e)}")
