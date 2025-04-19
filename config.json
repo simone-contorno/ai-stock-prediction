@@ -6,7 +6,9 @@
 		"input_features": [
 			"Open",
 			"Close",
-			"Volume"
+			"Volume",
+			"High",
+			"Low"
 		],
 		"target_feature": "Close",
 		"days": 30
@@ -26,13 +28,14 @@
 			"learning_rate_reduction": 25
 		}, 
         "model": {
+			"lstm_layers": 2,
             "lstm_units": 256,
             "dropout_rate": 0.1,
-            "dense_units": 128,
+            "dense_units": 64,
 			"l2_reg": 0.001,
 			"lstm_activation": "tanh",
-			"dense_activation": "relu",
-			"loss": "mae",
+			"dense_activation": "tanh",
+			"loss": "huber",
 			"optimizer": "adam",
 			"clipnorm": 1.0,
 			"momentum": 0.9
@@ -45,7 +48,7 @@
 		"save_model": true
     },
     "prediction": {
-		"model_path": ".\\results\\close\\2025-04-18_13-30-27\\models\\2025-04-18_13-30-27_lstm_close_30.keras",
+		"model_path": ".\\results\\close\\2025-04-19_12-56-38_mae_relu_batch\\models\\2025-04-19_12-56-38_lstm_close_30.keras",
 		"evaluate": true
     }
 }

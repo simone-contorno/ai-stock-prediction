@@ -25,6 +25,7 @@ class LSTModelBuilder:
             Compiled Keras Sequential model
         """
         # Extract model parameters from config
+        lstm_layers = config['training']['model']['lstm_layers']
         lstm_units = config['training']['model']['lstm_units']
         dropout_rate = config['training']['model']['dropout_rate']
         dense_units = config['training']['model']['dense_units']
@@ -44,20 +45,21 @@ class LSTModelBuilder:
         model = Sequential()
         model.add(Input(input_shape))
         
-        # LSTM layer
-        model.add(LSTM(lstm_units, 
-                      activation=lstm_activation, 
-                      kernel_initializer=GlorotUniform(), 
-                      kernel_regularizer=regularizers.l2(l2_reg),
-                      recurrent_regularizer=regularizers.l2(l2_reg),
-                      return_sequences=False))
-        
-        # Dropout for generalization
-        if dropout_rate > 0.0:
-            model.add(Dropout(dropout_rate))
+        for i in range(lstm_layers):
+            # LSTM layer
+            model.add(LSTM(int(lstm_units/(i+1)), 
+                        activation=lstm_activation, 
+                        kernel_initializer=GlorotUniform(), 
+                        kernel_regularizer=regularizers.l2(l2_reg),
+                        recurrent_regularizer=regularizers.l2(l2_reg),
+                        return_sequences=True if i == 0 and lstm_layers > 1 else False))
+            
+            # Dropout for generalization
+            if dropout_rate > 0.0:
+                model.add(Dropout(dropout_rate))
         
         # Normalization and dense layers
-        model.add(BatchNormalization())
+        #model.add(BatchNormalization())
         model.add(Dense(dense_units, 
                        activation=dense_activation, 
                        kernel_regularizer=regularizers.l2(l2_reg)))

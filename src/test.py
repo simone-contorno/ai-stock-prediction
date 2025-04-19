@@ -43,7 +43,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         logger.info(f"Loading model from {model_path}...")
         model = load_model(model_path)
         logger.info("Model loaded successfully")
-        
+
         # Load raw data
         data = DataLoader.load_raw_data(config, logger, is_training=False)
         
@@ -55,24 +55,35 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         
         # Load normalization parameters from the model directory
         model_dir = os.path.dirname(os.path.abspath(model_path))
-        data_min, data_max = DataLoader.load_normalization_params(model_dir, logger)
+        scaler_x, scaler_y = DataLoader.load_normalization_params(model_dir, logger)
         
-        # 4. Normalize input data using saved parameters
-        if data_min is not None and data_max is not None:
-            logger.info("Using saved normalization parameters")
-            input_normalized, _, _ = DataPreprocessor.normalize_data(input_data, data_min, data_max)
+        # Normalize input data using saved parameters
+        if scaler_x is not None and scaler_y is not None:
+            logger.info("Using saved normalization scalers")
+            input_normalized, target_normalized, _, _ = DataPreprocessor.normalize_data(input_data, target_data, scaler_x=scaler_x, scaler_y=scaler_y)
         else:
-            logger.warning("Saved normalization parameters not found, calculating from current data")
-            input_normalized, _, _ = DataPreprocessor.normalize_data(input_data)
+            logger.warning("Saved normalization scalers not found, generating from current data")
+            input_normalized, target_normalized, scaler_x, scaler_y = DataPreprocessor.normalize_data(input_data)
         logger.info(f"Data normalized:\n {input_normalized.describe()}")
+        logger.info(f"Target data normalized:\n {target_normalized.describe()}")
         
-        # 5. Prepare sequence data for prediction
-        X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(input_normalized, target_data, days, logger)
+        # Prepare sequence data for prediction
+        X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(days, input_normalized, target_normalized, logger)
         
         # Make predictions
         logger.info("Making predictions...")
         y_pred = model.predict(X_sequence)
         logger.info(f"Predictions shape: {y_pred.shape}")
+
+        # Denormalize predictions
+        y_pred = scaler_y.inverse_transform(y_pred)
+        #logger.info(f"Predictions denormalized:\n {y_pred.describe()}")
+        y_sequence = scaler_y.inverse_transform(y_sequence)
+        #logger.info(f"Target data denormalized:\n {y_sequence.describe()}")
+        
+        # Align the output with the target feature
+        y_pred = y_pred[days:]
+        y_sequence = y_sequence[:-days]
         
         # Evaluate predictions if requested
         if evaluate:
@@ -87,14 +98,14 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         
         # Plot and save predictions
         test_plot_path = os.path.join(logger.output_dirs['plots'], 'test.png')
-        Plotter.plot_predictions(y_sequence, y_pred, target_feature, save_path=test_plot_path)
+        Plotter.plot_predictions(target_feature, y_pred, y_sequence, save_path=test_plot_path)
         logger.info(f"Test plot saved to {test_plot_path}")
 
         # Plot and save predictions with offset 
-        test_plot_path = os.path.join(logger.output_dirs['plots'], 'test_offset.png')
-        y_pred_offset = y_pred + (y_pred[0] - y_sequence[0]) if y_pred[0] > y_sequence[0] else y_pred + (y_sequence[0] - y_pred[0])
-        Plotter.plot_predictions(y_sequence, y_pred_offset, target_feature, save_path=test_plot_path)
-        logger.info(f"Test plot saved to {test_plot_path}")
+        #test_plot_path = os.path.join(logger.output_dirs['plots'], 'test_offset.png')
+        #y_pred_offset = y_pred + (y_pred[0] - y_sequence[0]) if y_pred[0] > y_sequence[0] else y_pred + (y_sequence[0] - y_pred[0])
+        #Plotter.plot_predictions(y_sequence, y_pred_offset, target_feature, save_path=test_plot_path)
+        #logger.info(f"Test plot saved to {test_plot_path}")
         
         # Save predictions to CSV
         predictions_df = pd.DataFrame({

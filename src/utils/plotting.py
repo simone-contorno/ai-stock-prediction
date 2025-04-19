@@ -32,7 +32,7 @@ class Plotter:
         plt.show()
 
     @staticmethod
-    def plot_predictions(y_true: np.ndarray, y_pred: np.ndarray, feature_name: str, 
+    def plot_predictions(feature_name: str, y_pred: np.ndarray, y_true: np.ndarray = None, 
                         save_path: Optional[str] = None) -> None:
         """
         Plot actual vs predicted values.
@@ -46,21 +46,23 @@ class Plotter:
         plt.figure(figsize=(12, 6))
         
         # Ensure we're plotting the first column if multi-dimensional
-        if len(y_true.shape) > 1 and y_true.shape[1] > 1:
-            y_true_plot = y_true[:, 0]
-        else:
-            y_true_plot = y_true.flatten() if len(y_true.shape) > 1 else y_true
-            
         if len(y_pred.shape) > 1 and y_pred.shape[1] > 1:
             y_pred_plot = y_pred[:, 0]
         else:
             y_pred_plot = y_pred.flatten() if len(y_pred.shape) > 1 else y_pred
         
-        plt.plot(range(len(y_true_plot)), y_true_plot, color='blue', label='Actual')
+        if y_true is not None:
+            if len(y_true.shape) > 1 and y_true.shape[1] > 1:
+                y_true_plot = y_true[:, 0]
+            else:
+                y_true_plot = y_true.flatten() if len(y_true.shape) > 1 else y_true
+
+            plt.plot(range(len(y_true_plot)), y_true_plot, color='blue', label='Actual')
+
         plt.plot(range(len(y_pred_plot)), y_pred_plot, color='red', label='Predicted')
         plt.xlabel("Sample Number")
         plt.ylabel(feature_name)
-        plt.title(f"{feature_name} - Actual vs Predicted")
+        plt.title(f"{feature_name} - Stock Prediction")
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()

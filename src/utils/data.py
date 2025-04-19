@@ -6,6 +6,7 @@ import json
 import os
 import logging
 from typing import Dict, Tuple, Union, Optional, Any
+from joblib import load
 
 class DataLoader:
     @staticmethod
@@ -153,22 +154,23 @@ class DataLoader:
         Returns:
             Tuple of (data_min, data_max) loaded from the file
         """
-        # Construct the path to the normalization parameters file
-        norm_params_path = os.path.join(model_dir, 'normalization_params.json')
-        
-        if not os.path.exists(norm_params_path):
+
+        # Load the scalers for normalization
+        if os.path.exists(os.path.join(model_dir, 'scaler_x.joblib')):
+            scaler_x = load(os.path.join(model_dir, 'scaler_x.joblib'))
+        else:
             if logger:
-                logger.warning(f"Normalization parameters file not found at {norm_params_path}")
+                logger.warning(f"Normalization parameters files not found at {os.path.join(model_dir, 'scaler_x.joblib')}")
+            return None, None
+
+        if os.path.exists(os.path.join(model_dir, 'scaler_y.joblib')):
+            scaler_y = load(os.path.join(model_dir, 'scaler_y.joblib'))
+        else:
+            if logger:
+                logger.warning(f"Normalization parameters files not found at {os.path.join(model_dir, 'scaler_y.joblib')}")
             return None, None
         
-        # Load from JSON file
-        with open(norm_params_path, 'r') as f:
-            norm_params = json.load(f)
-        
-        data_min = norm_params['data_min']
-        data_max = norm_params['data_max']
-        
         if logger:
-            logger.info(f"Normalization parameters loaded from {norm_params_path}")
+            logger.info(f"Normalization parameters loaded from {model_dir}")
         
-        return data_min, data_max
+        return scaler_x, scaler_y

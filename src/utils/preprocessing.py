@@ -2,10 +2,9 @@
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union
-import os
-import json
+from typing import Dict, Optional, Tuple, Union
 import logging
+from sklearn.preprocessing import MinMaxScaler
 
 class DataPreprocessor:
     @staticmethod
@@ -35,53 +34,52 @@ class DataPreprocessor:
         return data
 
     @staticmethod
-    def normalize_data(data: Union[pd.DataFrame, np.ndarray], 
-                      data_min: Optional[Union[pd.Series, np.ndarray, Dict]] = None, 
-                      data_max: Optional[Union[pd.Series, np.ndarray, Dict]] = None
+    def normalize_data(input_data: Union[pd.DataFrame, np.ndarray], target_data: Optional[Union[pd.DataFrame, np.ndarray]] = None,
+                       scaler_x: Optional[MinMaxScaler] = None, scaler_y: Optional[MinMaxScaler] = None
                       ) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray, Dict], Union[pd.Series, np.ndarray, Dict]]:
         """
         Normalize data to range [0, 1].
         
         Args:
-            data: Input data (DataFrame or numpy array)
-            data_min: Optional minimum values for normalization (if None, calculated from data)
-            data_max: Optional maximum values for normalization (if None, calculated from data)
+            input_data: Input data (DataFrame or numpy array)
+            target_data: Optional target data (DataFrame or numpy array)
+            scaler_x: Optional MinMaxScaler for input data
+            scaler_y: Optional MinMaxScaler for target data
         
         Returns:
-            Tuple of (normalized_data, min_values, max_values)
+            Tuple of (normalized input data, normalized target data, scaler_x, scaler_y)
         """
 
-        if data_min is None or data_max is None:
-            # Calculate min and max from the data
-            if isinstance(data, pd.DataFrame):
-                data_min = data.min() if data_min is None else data_min
-                data_max = data.max() if data_max is None else data_max
-            else:  # For numpy arrays
-                data_min = np.min(data, axis=0) if data_min is None else data_min
-                data_max = np.max(data, axis=0) if data_max is None else data_max
-        
-        # Convert dictionary min/max values to Series if needed
-        if isinstance(data_min, dict) and isinstance(data, pd.DataFrame):
-            data_min = pd.Series(data_min)
-        if isinstance(data_max, dict) and isinstance(data, pd.DataFrame):
-            data_max = pd.Series(data_max)
-        
         # Normalize using the provided or calculated min/max values
-        normalized_data = (data - data_min) / (data_max - data_min)
-        
-        return normalized_data, data_min, data_max
+        if scaler_x is None:
+            scaler_x = MinMaxScaler()
+            normalized_input_array = scaler_x.fit_transform(input_data)
+        else:
+            normalized_input_array = scaler_x.transform(input_data)
+
+        if scaler_y is None:
+            scaler_y = MinMaxScaler()
+            normalized_target_array = scaler_y.fit_transform(target_data) if target_data is not None else None
+        else:
+            normalized_target_array = scaler_y.transform(target_data) if target_data is not None else None
+
+        # Convert back to DataFrame 
+        normalized_input_data = pd.DataFrame(normalized_input_array, columns=input_data.columns, index=input_data.index)
+        normalized_target_data = pd.DataFrame(normalized_target_array, columns=target_data.columns, index=target_data.index) if target_data is not None else None
+
+        return normalized_input_data, normalized_target_data, scaler_x, scaler_y
 
     @staticmethod
-    def prepare_sequence_data(input_data: pd.DataFrame, target_data: pd.DataFrame, 
-                            shift: int, logger: Optional[logging.Logger] = None
+    def prepare_sequence_data(shift: int, input_data: pd.DataFrame, target_data: Optional[pd.DataFrame] = None, 
+                            logger: Optional[logging.Logger] = None
                             ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Prepare sequence data for LSTM training/prediction.
         
         Args:
+            shift: Number of time steps to use for sequence
             input_data: Input features DataFrame
             target_data: Target features DataFrame
-            shift: Number of time steps to use for sequence
             logger: Optional logger for logging information
         
         Returns:
@@ -92,50 +90,20 @@ class DataPreprocessor:
         if shift > 0:
             for i in range(len(input_data) - shift*2):
                 X.append(input_data.iloc[i:i+shift].values)  # Past N days
-                y.append(target_data.iloc[i+shift*2])  # Next N days
+                if target_data is not None:
+                    y.append(target_data.iloc[i+shift*2])  # Next N days
             
             X_sequence = np.array(X)
-            y_sequence = np.array(y)
+            y_sequence = np.array(y) if target_data is not None else None
         else:
             X_sequence = input_data.values
-            y_sequence = target_data
+            y_sequence = target_data if target_data is not None else None
             X_sequence = X_sequence.reshape((X_sequence.shape[0], 1, X_sequence.shape[1]))
         
         if logger:
-            logger.info(f"Sequence data shapes --> X: {X_sequence.shape}, y: {y_sequence.shape}")
+            logger.info(f"Sequence data shapes --> X: {X_sequence.shape}, y: {y_sequence.shape if y_sequence is not None else 'N/A'}")
         
         return X_sequence, y_sequence
-
-    @staticmethod
-    def prepare_sequence_input_data(input_data: pd.DataFrame, shift: int, logger: Optional[logging.Logger] = None) -> np.ndarray:
-        """
-        Prepare sequence data for LSTM prediction (input only).
-        
-        Args:
-            input_data: Input features DataFrame
-            target_data: Target features DataFrame
-            shift: Number of time steps to use for sequence
-            logger: Optional logger for logging information
-        
-        Returns:
-            X_sequence as numpy array
-        """
-
-        X = []
-        
-        if shift > 0:
-            for i in range(shift):
-                X.append(input_data.iloc[i-shift*2:i-shift].values)  # Past N days
-            
-            X_sequence = np.array(X)
-        else:
-            X_sequence = input_data.values
-            X_sequence = X_sequence.reshape((X_sequence.shape[0], 1, X_sequence.shape[1]))
-        
-        if logger:
-            logger.info(f"Sequence data shapes --> X: {X_sequence.shape}")
-        
-        return X_sequence
 
     @staticmethod
     def split_train_test(X: np.ndarray, y: np.ndarray, test_size: float, 

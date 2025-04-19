@@ -38,39 +38,42 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         model = load_model(model_path)
         logger.info("Model loaded successfully")
         
-        # 1. Load raw data
+        # Load raw data
         data = DataLoader.load_raw_data(config, logger, is_training=False)
         
-        # 2. Clear zero values from raw data
+        # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
         
-        # 3. Split into input and target features
-        input_data, target_data = DataLoader.prepare_features(data, config, logger)
+        # Split into input and target features
+        input_data, _ = DataLoader.prepare_features(data, config, logger)
         
         # Load normalization parameters from the model directory
         model_dir = os.path.dirname(os.path.abspath(model_path))
-        data_min, data_max = DataLoader.load_normalization_params(model_dir, logger)
+        scaler_x, scaler_y = DataLoader.load_normalization_params(model_dir, logger)
         
-        # 4. Normalize input data using saved parameters
-        if data_min is not None and data_max is not None:
-            logger.info("Using saved normalization parameters")
-            input_normalized, _, _ = DataPreprocessor.normalize_data(input_data, data_min, data_max)
+        # Normalize input data using saved parameters
+        if scaler_x is not None and scaler_y is not None:
+            logger.info("Using saved normalization scalers")
+            input_normalized, _, _, _ = DataPreprocessor.normalize_data(input_data, scaler_x=scaler_x, scaler_y=scaler_y)
         else:
-            logger.warning("Saved normalization parameters not found, calculating from current data")
-            input_normalized, _, _ = DataPreprocessor.normalize_data(input_data)
-        logger.info("Data normalized")
+            logger.warning("Saved normalization scalers not found, generating from current data")
+            input_normalized, _, scaler_x, scaler_y = DataPreprocessor.normalize_data(input_data)
+        logger.info(f"Data normalized:\n {input_normalized.describe()}")
         
-        # 5. Prepare sequence data for prediction
-        X_sequence = DataPreprocessor.prepare_sequence_input_data(input_normalized, days, logger)
+        # Prepare sequence data for prediction
+        X_sequence, _ = DataPreprocessor.prepare_sequence_data(days, input_normalized, logger=logger)
         
         # Make predictions
         logger.info("Making predictions...")
         y_pred = model.predict(X_sequence)
-        logger.info(f"Predictions shape: {y_pred.shape}")
         
+        # Denormalize predictions
+        y_pred = scaler_y.inverse_transform(y_pred)
+        logger.info(f"Predictions shape: {y_pred.shape}")
+
         # Plot and save predictions
         predictions_plot_path = os.path.join(logger.output_dirs['plots'], 'predictions_real.png')
-        Plotter.plot_predictions(y_pred, y_pred, target_feature, save_path=predictions_plot_path)
+        Plotter.plot_predictions(target_feature, y_pred, save_path=predictions_plot_path)
         logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
         # Save predictions to CSV

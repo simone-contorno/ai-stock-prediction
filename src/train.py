@@ -9,7 +9,7 @@ from tensorflow.keras.models import Sequential # type: ignore
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau # type: ignore
 from datetime import datetime
 from typing import Dict, Any
-from sklearn.model_selection import train_test_split 
+from joblib import dump
 
 from src.utils import (
     Logger,
@@ -62,30 +62,46 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     try:
         # Load raw data
         data = DataLoader.load_raw_data(config, logger, is_training=True)
+        print("Loaded data head:\n", data.head())
+        print("Loaded data tail:\n", data.tail())
         
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
-        
+        print("Cleared data head:\n", data.head())
+        print("Cleared data tail:\n", data.tail())
+
         # Split into input and target features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)
+        print("Input head:\n", input_data.head(), target_data.head())
+        print("Input tail:\n", input_data.tail(), target_data.tail())
         
         # Normalize input data
-        input_normalized, input_min, input_max = DataPreprocessor.normalize_data(input_data)
-        logger.info(f"Data normalized:\n {input_normalized.describe()}")
+        input_normalized, target_normalized, scaler_x, scaler_y = DataPreprocessor.normalize_data(input_data, target_data)
+        #logger.info(f"Input data normalized:\n {input_normalized.describe()}")
+        #logger.info(f"Target data normalized:\n {target_normalized.describe()}")
+        #print("Normalized head:\n", input_normalized.head())
+        #print("Normalized tail:\n", input_normalized.tail())
         
-        # Save normalization parameters
-        DataLoader.save_normalization_params(input_min, input_max, output_dirs['models'], logger)
-        
+        # Save scalers
+        dump(scaler_x, os.path.join(output_dirs['models'], 'scaler_x.joblib'))
+        dump(scaler_y, os.path.join(output_dirs['models'], 'scaler_y.joblib'))
+        #DataLoader.save_normalization_params(scaler_x.data_min_, scaler_x.data_max_, scaler_y.data_min_, scaler_y.data_max_, output_dirs['models'], logger)
         
         # Prepare sequence data for LSTM
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(
-            input_normalized, target_data, days, logger
+            days, input_normalized, target_normalized, logger
         )
-        
-        # 6. Split into training and test sets
+        print("Sequence head:\n", X_sequence[:5], y_sequence[:5])
+        print("Sequence tail:\n", X_sequence[-5:], y_sequence[-5:])
+
+        # Split into training and test sets
         X_train, X_test, y_train, y_test = DataPreprocessor.split_train_test(
             X_sequence, y_sequence, test_size, shuffle=shuffle, random_state=random_seed, logger=logger
         )
+        print("Train head:\n", X_train[:5], y_train[:5])
+        print("Train tail:\n", X_train[-5:], y_train[-5:])
+        print("Test head:\n", X_test[:5], y_test[:5])
+        print("Test tail:\n", X_test[-5:], y_test[-5:])
 
         logger.info(f"Train-test split --> X_train: {X_train.shape}, y_train: {y_train.shape}, X_test: {X_test.shape}, y_test: {y_test.shape}")
         
@@ -139,10 +155,21 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         if test_size > 0:
             logger.info("Evaluating model on test data...")
             y_pred = model.predict(X_test)
-            
+
+            # Rescale the output
+            y_pred = scaler_y.inverse_transform(y_pred)
+            y_test = scaler_y.inverse_transform(y_test)
+
+            # Align the output with the target feature
+            y_pred = y_pred[days:]
+            y_test = y_test[:-days]
+
+            logger.info(f"Predictions shape: {y_pred.shape}")
+            logger.info(f"Test shape: {y_test.shape}")
+
             # Plot and save predictions
             predictions_plot_path = os.path.join(output_dirs['plots'], 'training_predictions.png')
-            Plotter.plot_predictions(y_test, y_pred, input_features[0], save_path=predictions_plot_path)
+            Plotter.plot_predictions(target_feature, y_pred, y_test, save_path=predictions_plot_path)
             logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
             # Evaluate predictions
