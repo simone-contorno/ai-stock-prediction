@@ -39,7 +39,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Model loaded successfully")
         
         # Load raw data
-        data = DataLoader.load_raw_data(config, logger, is_training=False)
+        data, dates = DataLoader.load_raw_data(config, logger, is_training=False)
         
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
@@ -73,7 +73,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
 
         # Plot and save predictions
         predictions_plot_path = os.path.join(logger.output_dirs['plots'], 'predictions_real.png')
-        Plotter.plot_predictions(target_feature, y_pred, save_path=predictions_plot_path)
+        Plotter.plot_predictions(target_feature, y_pred, dates=dates, save_path=predictions_plot_path)
         logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
         # Save predictions to CSV

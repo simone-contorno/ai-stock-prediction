@@ -45,7 +45,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Model loaded successfully")
 
         # Load raw data
-        data = DataLoader.load_raw_data(config, logger, is_training=False)
+        data, dates = DataLoader.load_raw_data(config, logger, is_training=False)
         
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
@@ -84,6 +84,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         # Align the output with the target feature
         y_pred = y_pred[days:]
         y_sequence = y_sequence[:-days]
+        dates = dates[-len(y_sequence):]
         
         # Evaluate predictions if requested
         if evaluate:
@@ -98,7 +99,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         
         # Plot and save predictions
         test_plot_path = os.path.join(logger.output_dirs['plots'], 'test.png')
-        Plotter.plot_predictions(target_feature, y_pred, y_sequence, save_path=test_plot_path)
+        Plotter.plot_predictions(target_feature, y_pred, y_sequence, dates=dates, save_path=test_plot_path, days_shift=days)
         logger.info(f"Test plot saved to {test_plot_path}")
 
         # Plot and save predictions with offset 

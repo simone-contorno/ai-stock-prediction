@@ -5,12 +5,13 @@ import numpy as np
 import json
 import os
 import logging
+import re
 from typing import Dict, Tuple, Union, Optional, Any
 from joblib import load
 
 class DataLoader:
     @staticmethod
-    def load_raw_data(config: Dict[str, Any], logger: logging.Logger, is_training: bool = False) -> pd.DataFrame:
+    def load_raw_data(config: Dict[str, Any], logger: logging.Logger, is_training: bool = False) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """
         Load raw data from CSV file.
         
@@ -21,7 +22,7 @@ class DataLoader:
             is_training: Whether this is for training (load all data) or prediction (load last N days)
             
         Returns:
-            Raw DataFrame with all columns
+            Tuple of (DataFrame with features, Series with dates)
         """
 
         csv_path = config['general']['csv_path']
@@ -32,17 +33,35 @@ class DataLoader:
         
         # Load dataset
         logger.info("Loading dataset...")
-        data = pd.read_csv(csv_path)
-
+        full_data = pd.read_csv(csv_path)
+        
+        # Extract dates by detecting column with datetime format pattern (e.g., 1927-12-30 00:00:00+00:00)
+        dates = None
+        # Look for a column with datetime format pattern
+        for col in full_data.columns:
+            # Check first row to see if it matches a datetime pattern
+            if full_data[col].iloc[0] and isinstance(full_data[col].iloc[0], str) and re.search(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}', str(full_data[col].iloc[0])):
+                # Found a column with datetime format
+                dates = full_data[col]
+                # Convert to datetime if it's not already
+                if not pd.api.types.is_datetime64_any_dtype(dates):
+                    dates = pd.to_datetime(dates)
+                # Extract only the date part (YYYY-MM-DD)
+                dates = dates.dt.strftime('%Y-%m-%d')
+                break
+        
         # For prediction/testing, load only the test size
         if is_training == False:
-            data = data[-int(len(data)*test_size):]
+            slice_idx = -int(len(full_data)*test_size)
+            full_data = full_data[slice_idx:]
+            if dates is not None:
+                dates = dates[slice_idx:]
             
-        data = data[[feat for feat in data.columns if feat in input_features or feat in target_feature]]
+        data = full_data[[feat for feat in full_data.columns if feat in input_features or feat in target_feature]]
         logger.info(f"Dataset loaded with shape: {data.shape}")
         logger.info(f"Zero values per column: {(data==0).sum().to_dict()}")
         
-        return data
+        return data, dates
 
     @staticmethod
     def prepare_features(data: pd.DataFrame, config: Dict[str, Any], 

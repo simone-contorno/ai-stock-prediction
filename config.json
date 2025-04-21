@@ -16,7 +16,7 @@
     "training": {
 		"test_size": 0.1,
 		"validation_split": 0.1,
-		"epochs": 1000,
+		"epochs": 10,
 		"batch_size": 32,
 		"learning_rate": 0.001,
 		"learning_rate_reduction": 0.5,
@@ -28,10 +28,10 @@
 			"learning_rate_reduction": 25
 		}, 
         "model": {
-			"lstm_layers": 2,
+			"lstm_layers": 1,
             "lstm_units": 256,
             "dropout_rate": 0.1,
-            "dense_units": 64,
+            "dense_units": 128,
 			"l2_reg": 0.001,
 			"lstm_activation": "tanh",
 			"dense_activation": "tanh",

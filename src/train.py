@@ -61,7 +61,7 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     
     try:
         # Load raw data
-        data = DataLoader.load_raw_data(config, logger, is_training=True)
+        data, dates = DataLoader.load_raw_data(config, logger, is_training=True)
         print("Loaded data head:\n", data.head())
         print("Loaded data tail:\n", data.tail())
         
@@ -163,13 +163,14 @@ def train_model(config: Dict[str, Any]) -> Sequential:
             # Align the output with the target feature
             y_pred = y_pred[days:]
             y_test = y_test[:-days]
+            dates = dates[-len(y_test):]
 
             logger.info(f"Predictions shape: {y_pred.shape}")
             logger.info(f"Test shape: {y_test.shape}")
 
             # Plot and save predictions
             predictions_plot_path = os.path.join(output_dirs['plots'], 'training_predictions.png')
-            Plotter.plot_predictions(target_feature, y_pred, y_test, save_path=predictions_plot_path)
+            Plotter.plot_predictions(target_feature, y_pred, y_test, dates=dates, save_path=predictions_plot_path, days_shift=days)
             logger.info(f"Predictions plot saved to {predictions_plot_path}")
         
             # Evaluate predictions
