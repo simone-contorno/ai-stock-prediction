@@ -16,7 +16,6 @@ class DataLoader:
         Args:
             config: Configuration dictionary
             logger: Logger for logging information
-            days: Number of days to predict
             is_training: Whether this is for training (load all data) or prediction (load last N days)
             
         Returns:
@@ -33,20 +32,26 @@ class DataLoader:
         logger.info("Loading dataset...")
         full_data = pd.read_csv(csv_path)
         
-        # Extract dates by detecting column with datetime format pattern (e.g., 1927-12-30 00:00:00+00:00)
+        # Extract dates by detecting column with datetime format pattern (e.g., 1927-12-30 00:00:00+00:00 or 1927-12-30)
         dates = None
         # Look for a column with datetime format pattern
         for col in full_data.columns:
             # Check first row to see if it matches a datetime pattern
-            if full_data[col].iloc[0] and isinstance(full_data[col].iloc[0], str) and re.search(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}', str(full_data[col].iloc[0])):
-                # Found a column with datetime format
-                dates = full_data[col]
-                # Convert to datetime if it's not already
-                if not pd.api.types.is_datetime64_any_dtype(dates):
-                    dates = pd.to_datetime(dates)
-                # Extract only the date part (YYYY-MM-DD)
-                dates = dates.dt.strftime('%Y-%m-%d')
-                break
+            if full_data[col].iloc[0] and isinstance(full_data[col].iloc[0], str):
+                # Check for full datetime format with time and offset
+                full_datetime_match = re.search(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}', str(full_data[col].iloc[0]))
+                # Check for simple date format (YYYY-MM-DD)
+                date_only_match = re.search(r'\d{4}-\d{2}-\d{2}', str(full_data[col].iloc[0]))
+                
+                if full_datetime_match or date_only_match:
+                    # Found a column with date format
+                    dates = full_data[col]
+                    # Convert to datetime if it's not already
+                    if not pd.api.types.is_datetime64_any_dtype(dates):
+                        dates = pd.to_datetime(dates)
+                    # Extract only the date part (YYYY-MM-DD)
+                    dates = dates.dt.strftime('%Y-%m-%d')
+                    break
         
         # For prediction/testing, load only the test size
         if is_training == False:
@@ -99,14 +104,13 @@ class DataLoader:
         Args:
             config: Configuration dictionary
             logger: Logger for logging information
-            days: Number of days to predict
             is_training: Whether this is for training (load all data) or prediction (load last N days)
             
         Returns:
             Tuple of (input_data, target_data, original_data)
         """
         # 1. Load raw data
-        data = DataLoader.load_raw_data(config, logger, days, is_training)
+        data = DataLoader.load_raw_data(config, logger, is_training)
         
         # 2. Split into features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)

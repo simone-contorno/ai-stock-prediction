@@ -77,9 +77,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
 
         # Denormalize predictions
         y_pred = scaler_y.inverse_transform(y_pred)
-        #logger.info(f"Predictions denormalized:\n {y_pred.describe()}")
         y_sequence = scaler_y.inverse_transform(y_sequence)
-        #logger.info(f"Target data denormalized:\n {y_sequence.describe()}")
         
         # Align the output with the target feature
         y_pred = y_pred[days:]
@@ -101,12 +99,6 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         test_plot_path = os.path.join(logger.output_dirs['plots'], 'test.png')
         Plotter.plot_predictions(target_feature, y_pred, y_sequence, dates=dates, save_path=test_plot_path, days_shift=days)
         logger.info(f"Test plot saved to {test_plot_path}")
-
-        # Plot and save predictions with offset 
-        #test_plot_path = os.path.join(logger.output_dirs['plots'], 'test_offset.png')
-        #y_pred_offset = y_pred + (y_pred[0] - y_sequence[0]) if y_pred[0] > y_sequence[0] else y_pred + (y_sequence[0] - y_pred[0])
-        #Plotter.plot_predictions(y_sequence, y_pred_offset, target_feature, save_path=test_plot_path)
-        #logger.info(f"Test plot saved to {test_plot_path}")
         
         # Save predictions to CSV
         predictions_df = pd.DataFrame({
