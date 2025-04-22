@@ -41,11 +41,15 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         # Load raw data
         data, dates = DataLoader.load_raw_data(config, logger, is_training=False)
         
+        # Take the needed data subset
+        days = config['general']['days']
+        data = data[-days*2:]
+
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
         
         # Split into input and target features
-        input_data, _ = DataLoader.prepare_features(data, config, logger)
+        input_data, target_data = DataLoader.prepare_features(data, config, logger)
         
         # Load normalization parameters from the model directory
         model_dir = os.path.dirname(os.path.abspath(model_path))
@@ -73,8 +77,19 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
 
         # Plot and save predictions
         predictions_plot_path = os.path.join(logger.output_dirs['plots'], 'predictions_real.png')
-        Plotter.plot_predictions(target_feature, y_pred, dates=dates, save_path=predictions_plot_path)
-        logger.info(f"Predictions plot saved to {predictions_plot_path}")
+        
+        # Get the target data for historical values
+        target_data_array = target_data.values if isinstance(target_data, pd.DataFrame) else target_data
+        
+        # Use the new plot_future_predictions function
+        Plotter.plot_future_predictions(
+            feature_name=target_feature, 
+            y_pred=y_pred[-days:], 
+            historical_data=target_data_array, 
+            dates=dates[-len(target_data_array):], 
+            save_path=predictions_plot_path
+        )
+        logger.info(f"Future predictions plot saved to {predictions_plot_path}")
         
         # Save predictions to CSV
         predictions_df = pd.DataFrame({

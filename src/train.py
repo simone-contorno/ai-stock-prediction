@@ -62,16 +62,20 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     try:
         # Load raw data
         data, dates = DataLoader.load_raw_data(config, logger, is_training=True)
+        print("Loaded data size:", data.shape)
         print("Loaded data head:\n", data.head())
         print("Loaded data tail:\n", data.tail())
         
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
+        print("Cleared data size:", data.shape)
         print("Cleared data head:\n", data.head())
         print("Cleared data tail:\n", data.tail())
 
         # Split into input and target features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)
+        print("Input data size:", input_data.shape)
+        print("Target data size:", target_data.shape)
         print("Input head:\n", input_data.head(), target_data.head())
         print("Input tail:\n", input_data.tail(), target_data.tail())
         
@@ -90,6 +94,7 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(
             days, input_normalized, target_normalized, logger
         )
+        print("Sequence data size:", X_sequence.shape, y_sequence.shape)
         print("Sequence head:\n", X_sequence[:5], y_sequence[:5])
         print("Sequence tail:\n", X_sequence[-5:], y_sequence[-5:])
 
@@ -102,8 +107,6 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         print("Test head:\n", X_test[:5], y_test[:5])
         print("Test tail:\n", X_test[-5:], y_test[-5:])
 
-        logger.info(f"Train-test split --> X_train: {X_train.shape}, y_train: {y_train.shape}, X_test: {X_test.shape}, y_test: {y_test.shape}")
-        
         # Build the model using LSTModelBuilder
         model = LSTModelBuilder.build(
             input_shape=(X_train.shape[1], X_train.shape[2]),

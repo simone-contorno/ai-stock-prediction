@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional
 import os
+from datetime import datetime, timedelta
 
 class Plotter:
     @staticmethod
@@ -114,26 +115,11 @@ class Plotter:
         plt.figure(figsize=(12, 6))
         
         # Ensure we're plotting the first column if multi-dimensional
-        y_pred_plot = y_pred[:, 0]
+        y_pred_plot = y_pred[:, 0] if len(y_pred.shape) > 1 else y_pred
         if y_true is not None:
-            y_true_plot = y_true[:, 0]
+            y_true_plot = y_true[:, 0] if len(y_true.shape) > 1 else y_true
         else:
             y_true_plot = None
-
-        """
-        if len(y_pred.shape) > 1 and y_pred.shape[1] > 1:
-            y_pred_plot = y_pred[:, 0]
-        else:
-            y_pred_plot = y_pred.flatten() if len(y_pred.shape) > 1 else y_pred
-            
-        if y_true is not None:
-            if len(y_true.shape) > 1 and y_true.shape[1] > 1:
-                y_true_plot = y_true[:, 0]
-            else:
-                y_true_plot = y_true.flatten() if len(y_true.shape) > 1 else y_true
-        else:
-            y_true_plot = None
-        """
         
         # Create numeric x-axis positions for plotting
         x_positions = np.arange(len(y_pred_plot))
@@ -142,18 +128,13 @@ class Plotter:
         if dates is not None and len(dates) > 0:
             x_label = "Date"            
             
-            # Align dates with the data points if days_shift is provided
-            aligned_dates = None
-            if days_shift > 0 and len(dates) > days_shift:
-                # For predictions, we need to use dates[days_shift:] to align with y_pred
-                # which starts at position days_shift in the original sequence
-                if hasattr(dates, 'iloc'):
-                    aligned_dates = dates.iloc[days_shift:days_shift+len(y_pred_plot)]
-                else:
-                    aligned_dates = dates[days_shift:days_shift+len(y_pred_plot)]
+            # Align dates with the data points
+            if hasattr(dates, 'iloc'):
+                # For pandas Series
+                aligned_dates = dates.iloc[-len(y_pred_plot):] if len(dates) >= len(y_pred_plot) else dates
             else:
-                # If no shift or not enough dates, use the original dates
-                aligned_dates = dates[:len(y_pred_plot)] if len(dates) > len(y_pred_plot) else dates
+                # For regular lists/arrays
+                aligned_dates = dates[-len(y_pred_plot):] if len(dates) >= len(y_pred_plot) else dates
             
             # Initialize figure with aligned dates
             Plotter.initialize_figure(aligned_dates, x_positions)
@@ -166,7 +147,7 @@ class Plotter:
             # Make sure we don't exceed array bounds
             plot_len = min(len(x_positions), len(y_true_plot))
             plt.plot(x_positions[:plot_len], y_true_plot[:plot_len], color='blue', label='Actual')
-
+    
         # Plot predictions
         plot_len = min(len(x_positions), len(y_pred_plot))
         plt.plot(x_positions[:plot_len], y_pred_plot[:plot_len], color='red', label='Predicted')
@@ -175,6 +156,125 @@ class Plotter:
         plt.xlabel(x_label)
         plt.ylabel(feature_name)
         plt.title(f"{feature_name} - Stock Prediction")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Save if path provided
+        if save_path:
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            plt.savefig(save_path)
+        
+        plt.show()
+        
+    @staticmethod
+    def generate_future_dates(last_date: str, num_days: int) -> List[str]:
+        """
+        Generate future dates starting from the last available date.
+        
+        Args:
+            last_date: The last date in the historical data (format: 'YYYY-MM-DD')
+            num_days: Number of future dates to generate
+            
+        Returns:
+            List of future dates in 'YYYY-MM-DD' format
+        """
+        # Convert the last date to datetime object
+        try:
+            last_datetime = pd.to_datetime(last_date)
+        except Exception as e:
+            # If conversion fails, use current date
+            print(f"Warning: Could not parse date '{last_date}'. Using current date instead.")
+            last_datetime = datetime.now()
+            
+        # Generate future dates
+        future_dates = []
+        for i in range(1, num_days + 1):
+            future_date = last_datetime + timedelta(days=i)
+            future_dates.append(future_date.strftime('%Y-%m-%d'))
+            
+        return future_dates
+    
+    @staticmethod
+    def plot_future_predictions(feature_name: str, y_pred: np.ndarray, 
+                              historical_data: Optional[np.ndarray] = None,
+                              dates: Optional[pd.Series] = None, 
+                              save_path: Optional[str] = None) -> None:
+        """
+        Plot historical data and future predictions on the same graph with a connecting line.
+        
+        Args:
+            feature_name: Name of the feature being predicted
+            y_pred: Predicted future values
+            historical_data: Historical values to display before predictions
+            dates: Optional pandas Series containing dates for historical data
+            save_path: Optional path to save the plot
+        """
+        plt.figure(figsize=(12, 6))
+        
+        # Ensure we're plotting the first column if multi-dimensional
+        y_pred_plot = y_pred[:, 0] if len(y_pred.shape) > 1 else y_pred
+        
+        # Process historical data if provided
+        if historical_data is not None:
+            hist_plot = historical_data[:, 0] if len(historical_data.shape) > 1 else historical_data
+            
+            # Create x-axis positions for plotting
+            hist_x = np.arange(len(hist_plot))
+            pred_x = np.arange(len(hist_plot), len(hist_plot) + len(y_pred_plot))
+            
+            # Prepare dates for x-axis if available
+            if dates is not None and len(dates) > 0:
+                x_label = "Date"
+                
+                # Format historical dates
+                if hasattr(dates, 'iloc'):
+                    # For pandas Series
+                    hist_dates = dates.iloc[:len(hist_plot)]
+                    last_date = dates.iloc[-1] if len(dates) > 0 else None
+                else:
+                    # For regular lists/arrays
+                    hist_dates = dates[:len(hist_plot)]
+                    last_date = dates[-1] if len(dates) > 0 else None
+                
+                # Generate future dates for predictions
+                if last_date is not None:
+                    future_dates = Plotter.generate_future_dates(last_date, len(y_pred_plot))
+                    all_dates = list(hist_dates) + future_dates
+                else:
+                    all_dates = hist_dates
+                    
+                # Create combined x positions
+                all_x = np.concatenate([hist_x, pred_x])
+                
+                # Initialize figure with all dates
+                Plotter.initialize_figure(all_dates, all_x)
+            else:
+                x_label = "Sample Number"
+            
+            # Plot historical data
+            plt.plot(hist_x, hist_plot, color='blue', label='Historical')
+            
+            # Create a connecting line between historical and predicted data
+            if len(hist_plot) > 0 and len(y_pred_plot) > 0:
+                # Create a small array with just the last historical point and first prediction point
+                connect_x = [hist_x[-1], pred_x[0]]
+                connect_y = [hist_plot[-1], y_pred_plot[0]]
+                # Plot the connecting line with the same color as predictions but no label
+                plt.plot(connect_x, connect_y, color='red', linestyle='-', linewidth=1.5)
+            
+            # Plot predictions
+            plt.plot(pred_x, y_pred_plot, color='red', label='Predicted')
+        else:
+            # If no historical data, just plot predictions
+            x_positions = np.arange(len(y_pred_plot))
+            plt.plot(x_positions, y_pred_plot, color='red', label='Predicted')
+            x_label = "Sample Number"
+        
+        # Set labels and title
+        plt.xlabel(x_label)
+        plt.ylabel(feature_name)
+        plt.title(f"{feature_name} - Stock Prediction with Future Forecast")
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()

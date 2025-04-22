@@ -87,11 +87,13 @@ class DataPreprocessor:
         """
         X, y = [], []
         
+        total_shift = shift*2 if target_data is not None else shift
+
         if shift > 0:
-            for i in range(len(input_data) - shift*2):
+            for i in range(len(input_data) - total_shift):
                 X.append(input_data.iloc[i:i+shift].values)  # Past N days
                 if target_data is not None:
-                    y.append(target_data.iloc[i+shift*2])  # Next N days
+                    y.append(target_data.iloc[i+total_shift])  # Next N days
             
             X_sequence = np.array(X)
             y_sequence = np.array(y) if target_data is not None else None

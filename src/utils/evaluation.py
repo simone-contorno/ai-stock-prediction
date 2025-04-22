@@ -40,10 +40,10 @@ class ModelEvaluator:
         
         # Log results
         logger.info(f"Evaluation metrics:")
-        logger.info(f"- Mean Absolute Error (MAE): {mae:.2f}")
-        logger.info(f"- Mean Squared Error (MSE): {mse:.2f}")
-        logger.info(f"- Root Mean Squared Error (RMSE): {rmse:.2f}")
-        logger.info(f"- Mean Absolute Percentage Error (MAPE): {mape:.2f} %")
+        logger.info(f"Mean Absolute Error (MAE): {mae:.2f}")
+        logger.info(f"Mean Squared Error (MSE): {mse:.2f}")
+        logger.info(f"Root Mean Squared Error (RMSE): {rmse:.2f}")
+        logger.info(f"Mean Absolute Percentage Error (MAPE): {mape:.2f} %")
         
         return {
             'mae': mae,
