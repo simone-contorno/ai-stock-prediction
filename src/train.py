@@ -85,8 +85,7 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         # Save scalers
         dump(scaler_x, os.path.join(output_dirs['models'], 'scaler_x.joblib'))
         dump(scaler_y, os.path.join(output_dirs['models'], 'scaler_y.joblib'))
-        #DataLoader.save_normalization_params(scaler_x.data_min_, scaler_x.data_max_, scaler_y.data_min_, scaler_y.data_max_, output_dirs['models'], logger)
-        
+
         # Prepare sequence data for LSTM
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(
             days, input_normalized, target_normalized, logger
@@ -148,7 +147,8 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         
         # Plot and save training history
         history_plot_path = os.path.join(output_dirs['plots'], 'training_history.png')
-        Plotter.plot_training_history(history.history, save_path=history_plot_path)
+        trimmed_history = {k: v[1:] for k, v in history.history.items()}
+        Plotter.plot_training_history(trimmed_history, save_path=history_plot_path)
         logger.info(f"Training history plot saved to {history_plot_path}")
         
         # Evaluate the model on test data
