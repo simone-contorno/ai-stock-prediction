@@ -140,9 +140,6 @@ class DataPreprocessor:
             X_train = X_train[indices]
             y_train = y_train[indices]
 
-        #X_train, _, y_train, _ = train_test_split(X_train, y_train, test_size=test_size, 
-        #                                            shuffle=shuffle, random_state=random_state)
-        
         if logger:
             logger.info(f"Train-test split - X_train: {X_train.shape}, y_train: {y_train.shape}, X_test: {X_test.shape}, y_test: {y_test.shape}")
         
