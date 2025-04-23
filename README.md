@@ -18,10 +18,20 @@ This project implements Recursive Neural Networks (LSTM) for stock price predict
   - `predict.py`: Prediction script implementation
 - `csv/`: Directory containing historical stock data (e.g., S&P500.csv)
 - `results/`: Directory containing trained models and their results
-  - Subdirectories organized by timestamp containing:
-    - `logs/`: Execution logs
-    - `models/`: Saved model files
-    - `plots/`: Visualization plots
+  - Organized by target feature (e.g., `close/`)
+    - Subdirectories organized by timestamp (e.g., `2025-04-23_08-53-39/`)
+      - `logs/`: Execution logs with detailed training information
+      - `models/`: Saved model files (.keras) and scalers (.joblib)
+      - `plots/`: Visualization plots (training history, predictions)
+      - `test/`: Test results organized by timestamp
+        - `logs/`: Test execution logs
+        - `plots/`: Test visualization plots
+        - `metrics.txt`: Detailed evaluation metrics
+        - `test.csv`: Test data and predictions
+      - `predict/`: Prediction results organized by timestamp
+        - `logs/`: Prediction execution logs
+        - `plots/`: Prediction visualization plots
+        - `predictions_real.csv`: Prediction data and actual values
 - `config.json`: Configuration file for model parameters and training settings
 - `main.py`: Main entry point for running the application
 - `download_dataset.py`: Script for downloading stock data using yfinance
@@ -92,11 +102,63 @@ You can modify the `config.json` file to customize model parameters, input featu
 
 ## Model Architecture
 
-The model uses an LSTM-based architecture with:
+The default model uses an LSTM-based architecture with the following components:
+
+### Input Layer
+- Input shape: (time_steps, features) where time_steps is the sequence length and features is the number of input features
+- The input layer explicitly defines the expected shape for the model
+
+### LSTM Layers
 - Configurable number of LSTM layers (default: 1)
-- LSTM layers with 256 units by default
-- Dropout regularization (10% by default)
-- Dense layers with 128 units
-- L2 regularization and gradient clipping
-- Configurable activation functions and optimizers
-- All hyperparameters configurable via config.json
+- Default configuration: 256 units in the first layer
+- Funnel architecture that gradually reduces dimensionality in deeper layers
+- Tanh activation function by default
+- Weight initialization using GlorotUniform (Xavier initialization)
+- L2 regularization applied to both kernel and recurrent weights to prevent overfitting
+
+### Regularization
+- Dropout layer after LSTM (default rate: 10%)
+- L2 regularization on weights (configurable strength)
+- Gradient clipping to prevent exploding gradients
+
+### Dense Layers
+- Hidden dense layer with 128 units and ReLU activation
+- L2 regularization applied to weights
+
+### Output Layer
+- Dense layer with linear activation for regression task
+- Single output unit for predicting the target feature
+
+### Compilation
+- Configurable optimizer: Adam (default) or SGD with momentum
+- Default loss function: Huber
+- Default Learning rate: 0.001 
+
+## Training Process
+
+The training process includes several optimization techniques:
+
+### Early Stopping
+- Monitors validation loss to prevent overfitting
+- Stops training when validation loss stops improving
+- Configurable patience (number of epochs with no improvement before stopping)
+- Option to restore best weights from the epoch with the best validation loss
+
+### Learning Rate Reduction
+- Reduces learning rate when training plateaus
+- Monitors training loss
+- Configurable patience for learning rate reduction
+- Configurable reduction factor
+- Minimum learning rate to prevent too small steps
+
+### Data Preprocessing
+- Normalization of input and target features
+- Sequence data preparation for LSTM
+- Train/test splitting with optional shuffling
+
+### Model Evaluation
+- Comprehensive metrics calculation
+- Visualization of training history
+- Prediction plots comparing actual vs. predicted values
+
+All hyperparameters are configurable via the `config.json` file, allowing for easy experimentation with different model architectures and training strategies.
