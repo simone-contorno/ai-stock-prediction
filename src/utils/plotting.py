@@ -1,4 +1,34 @@
-"""Plotting utilities for stock prediction visualization."""
+"""Plotting utilities for stock price prediction visualization.
+
+This module provides a comprehensive set of functions for creating visualizations of stock price data,
+model predictions, and training history. It encapsulates complex matplotlib operations into a simple,
+consistent API through the Plotter class, making it easy to generate professional-quality visualizations
+for financial time series analysis and forecasting.
+
+The module includes utilities for:
+
+1. Plotting training history (loss curves) - Visualize model convergence and identify potential
+   overfitting or underfitting during the training process.
+   
+2. Visualizing predictions vs actual values - Compare model predictions against ground truth
+   to evaluate model performance and accuracy on historical data.
+   
+3. Plotting future predictions alongside historical data - Create forecasting visualizations
+   that show both historical trends and future projections with clear visual distinction.
+   
+4. Configuring plot aesthetics and date formatting - Handle the complexities of date-based
+   x-axes with appropriate tick spacing and formatting for time series data.
+
+These visualizations are essential for:
+- Understanding model performance and limitations
+- Identifying patterns and trends in financial data
+- Communicating results effectively to stakeholders
+- Making data-driven investment decisions based on visual analysis
+
+All plotting functions support saving the generated visualizations to files for inclusion
+in reports or presentations. The module handles various edge cases such as multi-dimensional
+input arrays, date alignment, and appropriate scaling of visual elements.
+"""
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,11 +41,26 @@ class Plotter:
     @staticmethod
     def plot_training_history(history: Dict[str, List[float]], save_path: Optional[str] = None) -> None:
         """
-        Plot training history (loss and validation loss).
+        Plot training history (loss and validation loss). This method visualizes the training
+        progress of a machine learning model by plotting the loss metrics over epochs.
+        
+        The visualization shows both training loss and validation loss on the same graph,
+        allowing for easy comparison and identification of potential overfitting or underfitting.
+        This is crucial for understanding model convergence and training effectiveness.
         
         Args:
-            history: Training history dictionary
-            save_path: Optional path to save the plot
+            history: Training history dictionary containing at minimum 'loss' and 'val_loss' keys,
+                    each mapping to a list of float values representing the loss at each epoch.
+                    This is typically the history object returned by model.fit() in frameworks
+                    like TensorFlow/Keras.
+            save_path: Optional path to save the plot as an image file. If provided, the method
+                      will ensure the directory exists and save the figure.
+                      
+        Note:
+            The plot uses a consistent color scheme with grid lines for better readability.
+            Training loss is typically expected to decrease over epochs, while validation loss
+            should follow a similar trend without significant divergence from training loss.
+            Divergence between the two curves can indicate overfitting.
         """
         plt.figure(figsize=(10, 6))
         plt.plot(history['loss'], label='Training Loss')
@@ -36,11 +81,23 @@ class Plotter:
     @staticmethod
     def initialize_figure(aligned_dates: pd.Series, x_positions: np.ndarray) -> None:
         """
-        Initialize a figure for plotting with date ticks.
+        Initialize a figure for plotting with date ticks. This method handles the complex task of
+        creating appropriate date-based tick marks on the x-axis of time series plots.
+
+        The method intelligently determines the optimal number of date ticks to display based on
+        the figure width, ensuring readability while avoiding overcrowding. It selects evenly
+        spaced dates across the time range, always including the first and last dates for context.
 
         Args:
-            aligned_dates: Pandas Series containing aligned dates
-            x_positions: Numpy array of x-axis positions
+            aligned_dates: Pandas Series containing aligned dates for the x-axis. Can be either
+                          a pandas Series or a regular list/array of date strings or datetime objects.
+            x_positions: Numpy array of x-axis positions that correspond to each date. These are
+                        the numeric positions used for actual plotting coordinates.
+
+        Note:
+            This method automatically handles different date formats and ensures that tick labels
+            are properly formatted as 'YYYY-MM-DD' when possible. It also rotates date labels by
+            45 degrees to prevent overlap with long date strings.
         """
         # Create figure object
         fig = plt.gcf()
@@ -102,15 +159,33 @@ class Plotter:
                         dates: Optional[pd.Series] = None, save_path: Optional[str] = None,
                         days_shift: int = 0) -> None:
         """
-        Plot actual vs predicted values with dates on x-axis if available.
+        Plot actual vs predicted values with dates on x-axis if available. This method creates a
+        visualization comparing model predictions against actual values, which is essential for
+        evaluating model performance in stock price prediction tasks.
+        
+        The method handles both single-dimensional and multi-dimensional input arrays by
+        automatically extracting the first column for plotting. It also manages date alignment
+        and formatting when date information is provided.
         
         Args:
-            y_true: True values
-            y_pred: Predicted values
-            feature_name: Name of the feature being predicted
-            dates: Optional pandas Series containing dates for x-axis
-            save_path: Optional path to save the plot
-            days_shift: Number of days shifted in the prediction (for date alignment)
+            feature_name: Name of the feature being predicted (e.g., 'Close Price', 'Volume').
+                         This will be used for the y-axis label and plot title.
+            y_pred: Predicted values as a numpy array. Can be either 1D or 2D (in which case
+                   the first column will be used).
+            y_true: True/actual values as a numpy array, optional. When provided, these will be
+                   plotted alongside predictions for comparison.
+            dates: Optional pandas Series containing dates for x-axis. When provided, the plot
+                  will use dates instead of sample numbers, making the visualization more
+                  interpretable for time series data.
+            save_path: Optional path to save the plot as an image file. If provided, the method
+                      will ensure the directory exists and save the figure.
+            days_shift: Number of days shifted in the prediction (for date alignment). This parameter
+                       helps align predictions with actual values when there's a time offset.
+        
+        Note:
+            The method automatically handles array length mismatches by plotting only the
+            overlapping portion of the data. It also applies consistent styling with blue for
+            actual values and red for predictions.
         """
         plt.figure(figsize=(12, 6))
         
@@ -170,14 +245,32 @@ class Plotter:
     @staticmethod
     def generate_future_dates(last_date: str, num_days: int) -> List[str]:
         """
-        Generate future dates starting from the last available date.
+        Generate future dates starting from the last available date. This method is essential for
+        creating forecasting visualizations that extend beyond the available historical data.
+        
+        The method takes the last known date from historical data and generates a sequence of
+        future dates at daily intervals. These dates can then be used to properly label the x-axis
+        for future predictions, maintaining temporal continuity in visualizations.
         
         Args:
-            last_date: The last date in the historical data (format: 'YYYY-MM-DD')
-            num_days: Number of future dates to generate
+            last_date: The last date in the historical data (format: 'YYYY-MM-DD' or any format
+                      that pandas.to_datetime can parse). This serves as the starting point for
+                      generating future dates.
+            num_days: Number of future dates to generate. This should match the number of future
+                     predictions being visualized.
             
         Returns:
-            List of future dates in 'YYYY-MM-DD' format
+            List of future dates in 'YYYY-MM-DD' format, starting from the day after last_date
+            and continuing for num_days.
+            
+        Note:
+            The method includes robust error handling for date parsing. If the provided last_date
+            cannot be parsed, it falls back to using the current date as a starting point and
+            issues a warning message. This ensures the method doesn't fail even with invalid input.
+            
+            The generated dates follow calendar days and do not account for trading days or
+            holidays. For financial applications requiring only business days, additional
+            filtering may be needed.
         """
         # Convert the last date to datetime object
         try:
@@ -202,13 +295,37 @@ class Plotter:
                               save_path: Optional[str] = None) -> None:
         """
         Plot historical data and future predictions on the same graph with a connecting line.
+        This method creates a comprehensive visualization that shows both historical stock data
+        and future predictions in a continuous timeline, making it ideal for forecasting analysis.
+        
+        The method creates a visual distinction between historical (known) data and predicted
+        (future) values while maintaining visual continuity through a connecting line. This helps
+        users understand the relationship between past performance and future projections.
         
         Args:
-            feature_name: Name of the feature being predicted
-            y_pred: Predicted future values
-            historical_data: Historical values to display before predictions
-            dates: Optional pandas Series containing dates for historical data
-            save_path: Optional path to save the plot
+            feature_name: Name of the feature being predicted (e.g., 'Close Price', 'Volume').
+                         This will be used for the y-axis label and plot title.
+            y_pred: Predicted future values as a numpy array. Can be either 1D or 2D (in which case
+                   the first column will be used).
+            historical_data: Historical values to display before predictions. When provided, these
+                           values are plotted in blue to distinguish them from predictions (red).
+                           The method automatically handles the transition between historical and
+                           predicted data with a connecting line.
+            dates: Optional pandas Series containing dates for historical data. When provided, the
+                  method will generate appropriate future dates for predictions and display a
+                  date-based x-axis instead of sample numbers.
+            save_path: Optional path to save the plot as an image file. If provided, the method
+                      will ensure the directory exists and save the figure.
+        
+        Note:
+            The connecting line between historical and predicted data is created by drawing a line
+            segment between the last historical data point and the first prediction point. This
+            creates a smooth visual transition while still maintaining the distinction between
+            actual historical data and model predictions.
+            
+            When dates are provided, the method automatically generates future dates for the
+            prediction period using the generate_future_dates method, ensuring proper temporal
+            alignment of the visualization.
         """
         plt.figure(figsize=(12, 6))
         

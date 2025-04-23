@@ -1,4 +1,15 @@
-"""Data preprocessing utilities for stock prediction."""
+"""Data preprocessing utilities for stock price prediction.
+
+This module provides utilities for preprocessing time series data for stock price prediction:
+
+1. Data cleaning - removing rows with zero values that could skew the model
+2. Normalization - scaling features to a [0,1] range for better model convergence
+3. Sequence preparation - transforming time series data into supervised learning format
+4. Train/test splitting - dividing data into training and testing sets
+
+These preprocessing steps are essential for preparing raw stock data for LSTM models,
+which require normalized inputs and sequential data formatting.
+"""
 
 import pandas as pd
 import numpy as np
@@ -38,16 +49,25 @@ class DataPreprocessor:
                        scaler_x: Optional[MinMaxScaler] = None, scaler_y: Optional[MinMaxScaler] = None
                       ) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.Series, np.ndarray, Dict], Union[pd.Series, np.ndarray, Dict]]:
         """
-        Normalize data to range [0, 1].
+        Normalize data to range [0, 1] using MinMaxScaler.
+        
+        Normalization is crucial for neural networks to ensure all features contribute equally
+        to the learning process and to help the model converge faster. This function scales
+        all input features and target values to the range [0, 1].
+        
+        The function can either:
+        1. Create new scalers and fit them to the data (for training)
+        2. Use existing scalers to transform the data (for testing/prediction)
         
         Args:
-            input_data: Input data (DataFrame or numpy array)
-            target_data: Optional target data (DataFrame or numpy array)
-            scaler_x: Optional MinMaxScaler for input data
-            scaler_y: Optional MinMaxScaler for target data
+            input_data: Input features data (DataFrame or numpy array)
+            target_data: Optional target data to predict (DataFrame or numpy array)
+            scaler_x: Optional pre-fitted MinMaxScaler for input data (used for test/prediction)
+            scaler_y: Optional pre-fitted MinMaxScaler for target data (used for test/prediction)
         
         Returns:
             Tuple of (normalized input data, normalized target data, scaler_x, scaler_y)
+            where normalized data maintains the same format as input (DataFrame or numpy array)
         """
 
         # Normalize using the provided or calculated min/max values
@@ -74,16 +94,31 @@ class DataPreprocessor:
                             logger: Optional[logging.Logger] = None
                             ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Prepare sequence data for LSTM training/prediction.
+        Prepare sequence data for LSTM training/prediction by creating sliding windows.
+        
+        This function transforms time series data into a supervised learning format
+        suitable for LSTM models. It creates sequences of 'shift' length from the input data,
+        where each sequence is paired with a target value that is 'shift' steps in the future.
+        
+        For example, with shift=3:
+        - Input sequence: [day1, day2, day3] → Target: day6
+        - Input sequence: [day2, day3, day4] → Target: day7
+        - And so on...
+        
+        This sliding window approach allows the LSTM to learn patterns over time
+        and make predictions for future time steps.
         
         Args:
-            shift: Number of time steps to use for sequence
-            input_data: Input features DataFrame
-            target_data: Target features DataFrame
+            shift: Number of time steps to use for each input sequence and
+                   how many steps ahead to predict (prediction horizon)
+            input_data: Input features DataFrame (normalized)
+            target_data: Target features DataFrame (normalized) or None for prediction mode
             logger: Optional logger for logging information
         
         Returns:
-            Tuple of (X_sequence, y_sequence) as numpy arrays
+            Tuple of (X_sequence, y_sequence) as numpy arrays, where:
+            - X_sequence has shape (samples, time_steps, features)
+            - y_sequence has shape (samples, target_features) or None if target_data is None
         """
         X, y = [], []
         

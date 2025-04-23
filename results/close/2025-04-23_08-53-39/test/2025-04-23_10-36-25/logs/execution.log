@@ -1,0 +1,50 @@
+2025-04-23 10:36:25,773 - stock_prediction_Close - INFO - Logging initialized for Close prediction
+2025-04-23 10:36:25,773 - stock_prediction_Close - INFO - Starting prediction process with configuration:
+2025-04-23 10:36:25,773 - stock_prediction_Close - INFO - Target feature: Close, Days: 30
+2025-04-23 10:36:25,773 - stock_prediction_Close - INFO - Model path: .\results\close\2025-04-23_08-53-39\models\2025-04-23_08-53-39_lstm_close_30.keras
+2025-04-23 10:36:25,773 - stock_prediction_Close - INFO - Loading model from .\results\close\2025-04-23_08-53-39\models\2025-04-23_08-53-39_lstm_close_30.keras...
+2025-04-23 10:36:25,943 - stock_prediction_Close - INFO - Model loaded successfully
+2025-04-23 10:36:25,944 - stock_prediction_Close - INFO - Loading dataset...
+2025-04-23 10:36:26,001 - stock_prediction_Close - INFO - Dataset loaded with shape: (24442, 5)
+2025-04-23 10:36:26,003 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-23 10:36:26,003 - stock_prediction_Close - INFO - Original data shape: (24442, 5)
+2025-04-23 10:36:26,004 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-23 10:36:26,012 - stock_prediction_Close - INFO - Data shape after removing zeros: (13871, 5)
+2025-04-23 10:36:26,013 - stock_prediction_Close - INFO - Remaining zero values: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 0, 'Volume': 0}
+2025-04-23 10:36:26,014 - stock_prediction_Close - INFO - Input features: ['Open', 'Close', 'Volume', 'High', 'Low']
+2025-04-23 10:36:26,014 - stock_prediction_Close - INFO - Target feature: ['Close']
+2025-04-23 10:36:26,015 - stock_prediction_Close - INFO - Input shape: (13871, 5), Target shape: (13871, 1)
+2025-04-23 10:36:26,018 - stock_prediction_Close - INFO - Normalization parameters loaded from C:\Users\simon\Desktop\Programming\stock-prediction\results\close\2025-04-23_08-53-39\models
+2025-04-23 10:36:26,018 - stock_prediction_Close - INFO - Using saved normalization scalers
+2025-04-23 10:36:26,034 - stock_prediction_Close - INFO - Data normalized:
+                Open         Close        Volume          High           Low
+count  13871.000000  13871.000000  13871.000000  13871.000000  13871.000000
+mean       0.184843      0.184588      0.142721      0.185535      0.184386
+std        0.212566      0.212254      0.165850      0.213271      0.212121
+min        0.000000      0.000000      0.000000      0.000000      0.000000
+25%        0.023884      0.023852      0.007386      0.023968      0.023884
+50%        0.134278      0.134135      0.047442      0.135758      0.132936
+75%        0.231530      0.231183      0.294605      0.232425      0.230996
+max        1.000000      1.000000      1.000000      1.000000      1.000000
+2025-04-23 10:36:26,039 - stock_prediction_Close - INFO - Target data normalized:
+               Close
+count  13871.000000
+mean       0.184588
+std        0.212254
+min        0.000000
+25%        0.023852
+50%        0.134135
+75%        0.231183
+max        1.000000
+2025-04-23 10:36:26,039 - stock_prediction_Close - INFO - Preparing sequence data with shift 30
+2025-04-23 10:36:26,991 - stock_prediction_Close - INFO - Sequence data shapes --> X: (13811, 30, 5), y: (13811, 1)
+2025-04-23 10:36:27,000 - stock_prediction_Close - INFO - Making predictions...
+2025-04-23 10:36:28,219 - stock_prediction_Close - INFO - Predictions shape: (1387, 1)
+2025-04-23 10:36:28,221 - stock_prediction_Close - INFO - Evaluation metrics:
+2025-04-23 10:36:28,221 - stock_prediction_Close - INFO - Mean Absolute Error (MAE): 170.74
+2025-04-23 10:36:28,221 - stock_prediction_Close - INFO - Mean Squared Error (MSE): 44382.68
+2025-04-23 10:36:28,222 - stock_prediction_Close - INFO - Root Mean Squared Error (RMSE): 210.67
+2025-04-23 10:36:28,222 - stock_prediction_Close - INFO - Mean Absolute Percentage Error (MAPE): 3.83 %
+2025-04-23 10:36:28,223 - stock_prediction_Close - INFO - Metrics saved to C:\Users\simon\Desktop\Programming\stock-prediction\results\close\2025-04-23_08-53-39\test\2025-04-23_10-36-25\metrics.txt
+2025-04-23 10:37:02,946 - stock_prediction_Close - INFO - Test plot saved to C:\Users\simon\Desktop\Programming\stock-prediction\results\close\2025-04-23_08-53-39\test\2025-04-23_10-36-25\plots\test.png
+2025-04-23 10:37:02,955 - stock_prediction_Close - INFO - Test predictions saved to C:\Users\simon\Desktop\Programming\stock-prediction\results\close\2025-04-23_08-53-39\test\2025-04-23_10-36-25\test.csv

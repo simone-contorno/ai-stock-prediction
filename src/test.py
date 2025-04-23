@@ -1,4 +1,17 @@
-"""Test script for Stock Price Prediction RNN model."""
+"""Test script for Stock Price Prediction LSTM model.
+
+This script loads a trained LSTM model and evaluates its performance on test data.
+It performs the following steps:
+1. Loads the trained model from the specified path
+2. Preprocesses historical stock data (normalization, sequence preparation)
+3. Makes predictions on the test dataset
+4. Evaluates model performance using various metrics (MAE, MSE, RMSE, MAPE)
+5. Generates visualizations comparing predicted vs actual values
+6. Saves results to output directories
+
+The script handles the entire testing pipeline and can be run directly or
+imported and used by the main application.
+"""
 
 import os
 
@@ -20,7 +33,25 @@ from src.utils import (
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 def test_model(config: Dict[str, Any]) -> np.ndarray:
-    """Load model and make predictions."""
+    """Load a trained model and evaluate its performance on test data.
+    
+    This function implements the complete testing pipeline:
+    - Loads the model from the specified path in the config
+    - Preprocesses the data (normalization, sequence preparation)
+    - Makes predictions on the test dataset
+    - Evaluates and visualizes the model's performance
+    - Saves results to output directories
+    
+    Args:
+        config: Dictionary containing configuration parameters including:
+            - general.target_feature: The target stock metric to predict
+            - prediction.model_path: Path to the trained model file
+            - prediction.evaluate: Whether to calculate evaluation metrics
+            - training.test_size: Proportion of data to use for testing
+            
+    Returns:
+        np.ndarray: Array of predicted values
+    """
     # Extract configuration parameters
     target_feature = config['general']['target_feature']
     model_path = config['prediction']['model_path']
@@ -84,9 +115,12 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         y_pred = scaler_y.inverse_transform(y_pred)
         y_sequence = scaler_y.inverse_transform(y_sequence)
         
-        # Align the output with the target feature
-        # Explaination: as the model is trained to predict N days ahead,
-        # by having a N "hole" in the middle, this brings to a delay in the prediction
+        # Align the output with the target feature for proper comparison
+        # Explanation: The model is trained to predict stock prices N days ahead.
+        # To properly compare predictions with actual values, we need to align them:
+        # 1. For predictions: Skip the first N days since we don't have actual values to compare with
+        # 2. For actual values: Remove the last N days since we don't have predictions for them
+        # 3. This alignment ensures we're comparing predictions with their corresponding actual values
         y_pred = y_pred[days:]
         y_sequence = y_sequence[:-days]
         dates = dates[-len(y_sequence):]

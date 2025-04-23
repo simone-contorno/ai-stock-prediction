@@ -1,4 +1,16 @@
-""" Training script for Stock Price Prediction model. """
+"""Training script for Stock Price Prediction LSTM model.
+
+This script implements the complete pipeline for training an LSTM model to predict stock prices:
+1. Data loading and preprocessing (normalization, sequence preparation)
+2. Model configuration and building using the LSTModelBuilder
+3. Training with early stopping and learning rate reduction
+4. Evaluation on test data
+5. Visualization of training history and predictions
+6. Model and scaler saving for later use in testing and prediction
+
+The script is configurable through a JSON configuration file that specifies
+all hyperparameters, data sources, and model architecture details.
+"""
 
 import os
 
@@ -22,13 +34,25 @@ from src.models.lstm_model import LSTModelBuilder
 
 def train_model(config: Dict[str, Any]) -> Sequential:
     """
-    Train a model for stock price prediction.
+    Train an LSTM model for stock price prediction using the provided configuration.
+    
+    This function implements the complete training pipeline:
+    - Loads and preprocesses historical stock data
+    - Builds an LSTM model with the specified architecture
+    - Trains the model with early stopping and learning rate reduction
+    - Evaluates the model on test data
+    - Saves the trained model and normalization parameters
     
     Args:
-        config (dict): Configuration parameters for training.
+        config (dict): Configuration dictionary containing:
+            - general: Basic settings (features, target, days to predict)
+            - training: Training hyperparameters (epochs, batch size, etc.)
+            - training.model: Model architecture parameters (layers, units, etc.)
+            - training.patience: Early stopping and LR reduction settings
+            - training.verbose: Verbosity levels for different components
         
     Returns:
-        Sequential: Trained model.
+        Sequential: Trained Keras Sequential model
     """
 
     # Extract configuration parameters
@@ -49,6 +73,8 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     learning_rate_min = config['training']['learning_rate_min']
     
     # Set the random seed for reproducibility
+    # This ensures that results can be reproduced across different runs
+    # by initializing all random number generators with the same seed
     np.random.seed(random_seed)
     tf.random.set_seed(random_seed)
     
@@ -87,6 +113,9 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         dump(scaler_y, os.path.join(output_dirs['models'], 'scaler_y.joblib'))
 
         # Prepare sequence data for LSTM
+        # This transforms the time series data into supervised learning format
+        # where each input is a sequence of 'days' time steps, and each output
+        # is the target value 'days' steps in the future
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(
             days, input_normalized, target_normalized, logger
         )
@@ -111,20 +140,22 @@ def train_model(config: Dict[str, Any]) -> Sequential:
             logger=logger
         )
         
-        # Setup callbacks
+        # Setup callbacks for training optimization
+        # Early stopping: Prevents overfitting by stopping training when validation loss stops improving
         early_stopping = EarlyStopping(
-            monitor='val_loss',
-            patience=patience['early_stopping'],
-            verbose=verbose['early_stopping'],
-            restore_best_weights=restore_best_weights
+            monitor='val_loss',  # Monitor validation loss
+            patience=patience['early_stopping'],  # Number of epochs with no improvement before stopping
+            verbose=verbose['early_stopping'],  # Verbosity mode
+            restore_best_weights=restore_best_weights  # Whether to restore model weights from the epoch with the best value
         )
         
+        # Learning rate reduction: Reduces learning rate when training plateaus
         learning_rate_reduction = ReduceLROnPlateau(
-            monitor='loss',
-            patience=patience['learning_rate_reduction'],
-            verbose=verbose['learning_rate_reduction'],
-            factor=learning_rate_reduction,
-            min_lr=learning_rate_min
+            monitor='loss',  # Monitor training loss
+            patience=patience['learning_rate_reduction'],  # Number of epochs with no improvement before reducing LR
+            verbose=verbose['learning_rate_reduction'],  # Verbosity mode
+            factor=learning_rate_reduction,  # Factor by which to reduce learning rate
+            min_lr=learning_rate_min  # Lower bound on the learning rate
         )
         
         # Train the model

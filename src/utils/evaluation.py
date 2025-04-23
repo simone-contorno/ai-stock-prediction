@@ -1,4 +1,17 @@
-"""Evaluation utilities for stock prediction models."""
+"""Evaluation utilities for stock price prediction models.
+
+This module provides functions for evaluating the performance of stock price prediction models
+using various statistical metrics. It calculates and reports standard regression metrics that
+quantify the accuracy of the predictions compared to actual values.
+
+The main metrics calculated are:
+- Mean Absolute Error (MAE): Average absolute difference between predicted and actual values
+- Mean Squared Error (MSE): Average of squared differences, penalizes larger errors more heavily
+- Root Mean Squared Error (RMSE): Square root of MSE, in the same unit as the target variable
+- Mean Absolute Percentage Error (MAPE): Average percentage difference, scale-independent
+
+These metrics help in understanding model performance and comparing different models.
+"""
 
 import numpy as np
 import logging
@@ -10,15 +23,31 @@ class ModelEvaluator:
     def evaluate_predictions(y_true: np.ndarray, y_pred: np.ndarray, 
                            logger: logging.Logger) -> Dict[str, float]:
         """
-        Evaluate predictions using multiple metrics.
+        Evaluate stock price predictions using multiple statistical metrics.
+        
+        This function calculates several regression metrics to assess how well
+        the predicted stock prices match the actual values. Each metric provides
+        a different perspective on model performance:
+        
+        - MAE (Mean Absolute Error): Average magnitude of errors without considering direction
+          Lower is better. Unit is the same as the stock price.
+        
+        - MSE (Mean Squared Error): Average of squared errors, giving more weight to larger errors
+          Lower is better. Unit is squared stock price.
+        
+        - RMSE (Root Mean Squared Error): Square root of MSE, bringing the unit back to stock price
+          Lower is better. More interpretable than MSE.
+        
+        - MAPE (Mean Absolute Percentage Error): Average percentage error, scale-independent
+          Lower is better. Expressed as a percentage.
         
         Args:
-            y_true: True values
-            y_pred: Predicted values
-            logger: Logger for logging information
+            y_true: Array of actual stock prices
+            y_pred: Array of predicted stock prices
+            logger: Logger for logging the calculated metrics
             
         Returns:
-            Dictionary of evaluation metrics
+            Dictionary containing the calculated evaluation metrics
         """
 
         # Ensure we're using the first column if multi-dimensional

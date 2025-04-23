@@ -114,14 +114,18 @@ class DataLoader:
                                 logger: Optional[logging.Logger] = None
                                 ) -> Tuple[Union[pd.Series, dict], Union[pd.Series, dict]]:
         """
-        Load normalization parameters (min and max values) from a JSON file.
+        Load saved normalization parameters (scalers) from the model directory.
+        
+        For consistent preprocessing across training, testing, and prediction phases,
+        the same normalization parameters must be used. This function loads previously
+        saved MinMaxScalers that were used during model training.
         
         Args:
-            model_dir: Directory where the model is saved
-            logger: Optional logger for logging information
+            model_dir: Directory where the model and scalers are saved
+            logger: Optional logger for logging information about the loading process
             
         Returns:
-            Tuple of (data_min, data_max) loaded from the file
+            Tuple of (scaler_x, scaler_y) where each is a scaler or None if not found
         """
 
         # Load the scalers for normalization

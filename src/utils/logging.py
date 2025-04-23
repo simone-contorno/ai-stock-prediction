@@ -1,4 +1,17 @@
-""" Logging utility for stock prediction. """
+"""Logging utility for stock price prediction.
+
+This module provides a centralized logging system for the stock price prediction application.
+It handles log file creation, directory structure setup, and configuration of logging levels.
+
+The Logger class creates a consistent directory structure for each execution:
+- For training: results/{target_feature}/{timestamp}/
+  with subdirectories for models, logs, plots, and results
+- For testing/prediction: next to the model directory with specified subfolder
+  (e.g., 'test' or 'predict')
+
+This ensures that all outputs from a single execution are organized together
+and can be easily referenced later.
+"""
 
 import logging
 import os
