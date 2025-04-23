@@ -1,10 +1,20 @@
-# Stock Price Prediction - Main Script
+"""
+Stock Price Prediction - Main Script
+
+This is the entry point for the stock price prediction application.
+The application supports three modes of operation:
+- Training: Train a new LSTM model on historical stock data
+- Testing: Evaluate an existing model on test data
+- Prediction: Use an existing model to predict future stock prices
+"""
 
 import os
 
 # Disable oneDNN optimizations for TensorFlow
 # This is a workaround for a known issue with TensorFlow and oneDNN optimizations
+# that can cause crashes or performance issues on some systems
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+# Suppress TensorFlow INFO messages, showing only warnings and errors
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
 import argparse
@@ -15,7 +25,7 @@ from src.predict import predict_future
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Stock Price Prediction using RNN')
+    parser = argparse.ArgumentParser(description='Stock Price Prediction using LSTM')
     parser.add_argument('--mode', type=str, choices=['train', 'test', 'predict'], required=True,
                         help='Mode: train a new model, test an existing model, or make future predictions')
     args = parser.parse_args()

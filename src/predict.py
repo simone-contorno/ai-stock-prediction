@@ -1,4 +1,19 @@
-"""Prediction script for Stock Price Prediction RNN model."""
+"""Prediction script for Stock Price Prediction LSTM model.
+
+This script uses a trained LSTM model to predict future stock prices.
+Unlike the test script which evaluates model performance on historical data,
+this script focuses on making predictions for future time periods.
+
+The script performs the following steps:
+1. Loads the trained model from the specified path
+2. Preprocesses the most recent historical stock data
+3. Uses the model to predict future stock prices
+4. Visualizes the predictions alongside historical data
+5. Saves the predictions and visualizations to output directories
+
+The prediction horizon is determined by the 'days' parameter extracted from
+the model filename or specified in the configuration.
+"""
 
 import os
 
@@ -15,7 +30,25 @@ from src.utils import (
 )
 
 def predict_future(config: Dict[str, Any]) -> np.ndarray:
-    """Load model and make predictions."""
+    """Load a trained model and predict future stock prices.
+    
+    This function implements the complete prediction pipeline:
+    - Loads the model from the specified path in the config
+    - Preprocesses the most recent historical data
+    - Uses the model to predict future stock prices
+    - Visualizes and saves the predictions
+    
+    Unlike the test_model function which evaluates performance on known data,
+    this function focuses on predicting future values beyond the available data.
+    
+    Args:
+        config: Dictionary containing configuration parameters including:
+            - general.target_feature: The target stock metric to predict
+            - prediction.model_path: Path to the trained model file
+            
+    Returns:
+        np.ndarray: Array of predicted future values
+    """
     # Extract configuration parameters
     target_feature = config['general']['target_feature']
     model_path = config['prediction']['model_path']
@@ -63,7 +96,9 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         # Prepare sequence data for prediction
         X_sequence, _ = DataPreprocessor.prepare_sequence_data(days, input_normalized, logger=logger)
         
-        # Take the needed data subset
+        # Take only the most recent data for making future predictions
+        # We use the last days*2 data points to ensure we have enough context
+        # for the model to make accurate predictions about the future
         X_sequence = X_sequence[-days*2:]
         target_data = target_data[-days*2:]
 
