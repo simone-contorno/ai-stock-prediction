@@ -25,6 +25,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
     target_feature = config['general']['target_feature']
     model_path = config['prediction']['model_path']
     evaluate = config['prediction']['evaluate']
+    test_size = config['training']['test_size']
     
     # Extract days from model filename
     import re
@@ -45,7 +46,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Model loaded successfully")
 
         # Load raw data
-        data, dates = DataLoader.load_raw_data(config, logger, is_training=False)
+        data, dates = DataLoader.load_raw_data(config, logger)
         
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
@@ -70,6 +71,10 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         # Prepare sequence data for prediction
         X_sequence, y_sequence = DataPreprocessor.prepare_sequence_data(days, input_normalized, target_normalized, logger)
         
+        # Take only the test size
+        X_sequence = X_sequence[-int(test_size*len(data)):]
+        y_sequence = y_sequence[-int(test_size*len(data)):]
+
         # Make predictions
         logger.info("Making predictions...")
         y_pred = model.predict(X_sequence)
@@ -80,6 +85,8 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
         y_sequence = scaler_y.inverse_transform(y_sequence)
         
         # Align the output with the target feature
+        # Explaination: as the model is trained to predict N days ahead,
+        # by having a N "hole" in the middle, this brings to a delay in the prediction
         y_pred = y_pred[days:]
         y_sequence = y_sequence[:-days]
         dates = dates[-len(y_sequence):]

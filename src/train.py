@@ -81,10 +81,6 @@ def train_model(config: Dict[str, Any]) -> Sequential:
         
         # Normalize input data
         input_normalized, target_normalized, scaler_x, scaler_y = DataPreprocessor.normalize_data(input_data, target_data)
-        #logger.info(f"Input data normalized:\n {input_normalized.describe()}")
-        #logger.info(f"Target data normalized:\n {target_normalized.describe()}")
-        #print("Normalized head:\n", input_normalized.head())
-        #print("Normalized tail:\n", input_normalized.tail())
         
         # Save scalers
         dump(scaler_x, os.path.join(output_dirs['models'], 'scaler_x.joblib'))

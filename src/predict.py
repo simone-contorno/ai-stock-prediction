@@ -39,11 +39,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         logger.info("Model loaded successfully")
         
         # Load raw data
-        data, dates = DataLoader.load_raw_data(config, logger, is_training=False)
-        
-        # Take the needed data subset
-        days = config['general']['days']
-        data = data[-days*2:]
+        data, dates = DataLoader.load_raw_data(config, logger)
 
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
@@ -67,6 +63,10 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         # Prepare sequence data for prediction
         X_sequence, _ = DataPreprocessor.prepare_sequence_data(days, input_normalized, logger=logger)
         
+        # Take the needed data subset
+        X_sequence = X_sequence[-days*2:]
+        target_data = target_data[-days*2:]
+
         # Make predictions
         logger.info("Making predictions...")
         y_pred = model.predict(X_sequence)

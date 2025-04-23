@@ -16,7 +16,7 @@
     "training": {
 		"test_size": 0.1,
 		"validation_split": 0.1,
-		"epochs": 2,
+		"epochs": 200,
 		"batch_size": 32,
 		"learning_rate": 0.001,
 		"learning_rate_reduction": 0.5,
@@ -48,7 +48,7 @@
 		"save_model": true
     },
     "prediction": {
-		"model_path": ".\\results\\close\\2025-04-22_18-48-27\\models\\2025-04-22_18-48-27_lstm_close_30.keras",
+		"model_path": ".\\results\\close\\2025-04-23_08-53-39\\models\\2025-04-23_08-53-39_lstm_close_30.keras",
 		"evaluate": true
     }
 }

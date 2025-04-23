@@ -9,15 +9,14 @@ from joblib import load
 
 class DataLoader:
     @staticmethod
-    def load_raw_data(config: Dict[str, Any], logger: logging.Logger, is_training: bool = False) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
+    def load_raw_data(config: Dict[str, Any], logger: logging.Logger) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """
         Load raw data from CSV file.
         
         Args:
             config: Configuration dictionary
             logger: Logger for logging information
-            is_training: Whether this is for training (load all data) or prediction (load last N days)
-            
+
         Returns:
             Tuple of (DataFrame with features, Series with dates)
         """
@@ -52,13 +51,6 @@ class DataLoader:
                     # Extract only the date part (YYYY-MM-DD)
                     dates = dates.dt.strftime('%Y-%m-%d')
                     break
-        
-        # For prediction/testing, load only the test size
-        if is_training == False:
-            slice_idx = -int(len(full_data)*test_size)
-            full_data = full_data[slice_idx:]
-            if dates is not None:
-                dates = dates[slice_idx:]
             
         data = full_data[[feat for feat in full_data.columns if feat in input_features or feat in target_feature]]
         logger.info(f"Dataset loaded with shape: {data.shape}")

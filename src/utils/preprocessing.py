@@ -90,6 +90,7 @@ class DataPreprocessor:
         total_shift = shift*2 if target_data is not None else shift
 
         if shift > 0:
+            logger.info(f"Preparing sequence data with shift {shift}")
             for i in range(len(input_data) - total_shift):
                 X.append(input_data.iloc[i:i+shift].values)  # Past N days
                 if target_data is not None:
