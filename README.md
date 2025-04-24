@@ -1,6 +1,6 @@
 # Stock Price Prediction with LSTM
 
-This project implements Recursive Neural Networks (LSTM) for stock price prediction using historical data. The system uses LSTM (Long Short-Term Memory) architecture to predict stock prices based on historical market data.
+This project implements Recursive Neural Networks (RNN) for stock price prediction using historical data. The system uses LSTM (Long Short-Term Memory) architecture to predict stock prices based on historical market data.
 
 ## Project Structure
 
