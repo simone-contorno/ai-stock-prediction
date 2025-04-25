@@ -68,6 +68,9 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
     try:
         # Load the model
         logger.info(f"Loading model from {model_path}...")
+        # Get current absoulute path
+        current_folder = os.path.abspath(os.path.dirname(__file__))
+        model_path = os.path.join(current_folder, "..\\", model_path[2:])
         model = load_model(model_path)
         logger.info("Model loaded successfully")
         
@@ -97,9 +100,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         X_sequence, _ = DataPreprocessor.prepare_sequence_data(days, input_normalized, logger=logger)
         
         # Take only the most recent data for making future predictions
-        # We use the last days*2 data points to ensure we have enough context
-        # for the model to make accurate predictions about the future
-        X_sequence = X_sequence[-days*2:]
+        X_sequence = X_sequence[-days:]
         target_data = target_data[-days*2:]
 
         # Make predictions

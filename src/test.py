@@ -73,6 +73,9 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
     try:
         # Load the model
         logger.info(f"Loading model from {model_path}...")
+        # Get current absoulute path
+        current_folder = os.path.abspath(os.path.dirname(__file__))
+        model_path = os.path.join(current_folder, "..\\", model_path[2:])
         model = load_model(model_path)
         logger.info("Model loaded successfully")
 

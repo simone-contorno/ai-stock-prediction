@@ -31,7 +31,8 @@ def main():
     args = parser.parse_args()
     
     # Load configuration
-    with open('config.json', 'r') as f:
+    current_folder = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(current_folder, 'config.json'), 'r') as f:
         config = json.load(f)
     
     # Execute based on mode and type

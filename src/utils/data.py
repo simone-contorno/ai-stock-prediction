@@ -1,5 +1,7 @@
 """ Data loading and saving utilities for stock prediction. """
 
+from locale import currency
+from multiprocessing import current_process
 import pandas as pd
 import os
 import logging
@@ -29,6 +31,8 @@ class DataLoader:
         
         # Load dataset
         logger.info("Loading dataset...")
+        current_folder = os.path.abspath(os.path.dirname(__file__))
+        csv_path = os.path.join(current_folder, "..\\..\\", csv_path[2:])
         full_data = pd.read_csv(csv_path)
         
         # Extract dates by detecting column with datetime format pattern (e.g., 1927-12-30 00:00:00+00:00 or 1927-12-30)
