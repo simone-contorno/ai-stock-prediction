@@ -47,7 +47,8 @@ class DataLoader:
         logger.info("Loading dataset...")
         current_folder = os.path.abspath(os.path.dirname(__file__))
         csv_path = os.path.join(current_folder, "..\\..\\", csv_path[2:])
-        full_data = pd.read_csv(csv_path)        
+        full_data = pd.read_csv(csv_path)
+        
         # Extract dates by detecting column with datetime format pattern (e.g., 1927-12-30 00:00:00+00:00 or 1927-12-30)
         dates = None
         # Look for a column with datetime format pattern

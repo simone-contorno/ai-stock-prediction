@@ -128,13 +128,18 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         )
         logger.info(f"Future predictions plot saved to {predictions_plot_path}")
         
-        # Save predictions to CSV
+        # Generate future dates for predictions
+        last_date = dates.values[-1] if len(dates) > 0 else None
+        future_dates = Plotter.generate_future_dates(last_date, len(y_pred))
+        
+        # Save predictions to CSV with dates
         predictions_df = pd.DataFrame({
+            'date': future_dates,
             'predicted': y_pred[:, 0] if len(y_pred.shape) > 1 else y_pred
         })
         predictions_csv_path = os.path.join(logger.output_dirs['results'], 'predictions_real.csv')
         predictions_df.to_csv(predictions_csv_path, index=False)
-        logger.info(f"Predictions saved to {predictions_csv_path}")
+        logger.info(f"Predictions saved to {predictions_csv_path} with date column")
         
         # Update config.json with the absolute path of the CSV file
         abs_csv_path = os.path.abspath(predictions_csv_path)
