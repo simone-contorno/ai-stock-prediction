@@ -21,7 +21,7 @@ from datetime import datetime
 class Logger:
     @staticmethod
     def setup(target_feature: str, is_training: bool = True, model_path: str = None, 
-             subfolder_name: Optional[str] = None) -> logging.Logger:
+             subfolder_name: Optional[str] = None, config: Optional[Dict] = None) -> logging.Logger:
         """
         Set up logging configuration with log files in appropriate subfolder.
         
@@ -39,7 +39,8 @@ class Logger:
             target_feature, 
             is_training=is_training, 
             model_path=model_path,
-            subfolder_name=subfolder_name
+            subfolder_name=subfolder_name,
+            config=config
         )
         
         # Configure logger to use the logs directory
@@ -82,10 +83,11 @@ class Logger:
 
     @staticmethod
     def _create_output_directories(target_feature: str, is_training: bool = True, 
-                                 model_path: str = None, subfolder_name: Optional[str] = None) -> Dict[str, str]:
+                                 model_path: str = None, subfolder_name: Optional[str] = None,
+                                 config: Optional[Dict] = None) -> Dict[str, str]:
         """
         Create necessary output directories for models, logs, and visualizations.
-        For training: creates in results/feature/timestamp/
+        For training: creates in results/stock_symbol/feature/timestamp/
         For prediction/testing: creates next to model directory in specified subfolder
         
         Args:
@@ -93,6 +95,7 @@ class Logger:
             is_training: Whether this is for training (True) or prediction/testing (False)
             model_path: Path to the model file (required for prediction/testing)
             subfolder_name: Name of the subfolder to create for outputs (e.g. 'predict', 'test')
+            config: Configuration dictionary containing general settings including stock_symbol
             
         Returns:
             Dictionary with paths to created directories
@@ -100,9 +103,10 @@ class Logger:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         
         if is_training:
-            # For training: create in results/feature/timestamp/
+            # For training: create in results/stock_symbol/feature/timestamp/
             target_dir = target_feature.lower()
-            execution_dir = os.path.join('results', target_dir, timestamp)
+            stock_symbol = config.get('general', {}).get('stock_symbol', 'unknown') if config else 'unknown'
+            execution_dir = os.path.join('results', stock_symbol, target_dir, timestamp)
             
             dirs = {
                 'models': os.path.join(execution_dir, 'models'),
@@ -118,7 +122,10 @@ class Logger:
             model_dir = os.path.dirname(os.path.abspath(model_path))
             # Use provided subfolder name or default to 'predict'
             output_subfolder = subfolder_name if subfolder_name else 'predict'
-            predictions_dir = os.path.join(os.path.dirname(model_dir), output_subfolder, timestamp)
+            
+            # Extract stock symbol from config if available
+            stock_symbol = config.get('general', {}).get('stock_symbol', 'unknown') if config else 'unknown'
+            predictions_dir = os.path.join(os.path.dirname(model_dir), stock_symbol, output_subfolder, timestamp)
             
             dirs = {
                 'logs': os.path.join(predictions_dir, 'logs'),

@@ -73,10 +73,14 @@ The `config.json` file contains all necessary parameters:
 ### Downloading Stock Data
 
 ```bash
+# Download S&P500 (default) data
 python download_dataset.py
+
+# Download data for a specific ticker
+python download_dataset.py --ticker AAPL
 ```
 
-This will download S&P500 historical data by default. Edit the script to download data for other stocks.
+This will download historical stock data from Yahoo Finance. You can specify a different ticker symbol using the `--ticker` argument.
 
 ### Training a New Model
 

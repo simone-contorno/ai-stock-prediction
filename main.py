@@ -28,12 +28,17 @@ def main():
     parser = argparse.ArgumentParser(description='Stock Price Prediction using LSTM')
     parser.add_argument('--mode', type=str, choices=['train', 'test', 'predict'], required=True,
                         help='Mode: train a new model, test an existing model, or make future predictions')
+    parser.add_argument('--symbol', type=str, help='Stock market symbol to use (overrides config.json)')
     args = parser.parse_args()
     
     # Load configuration
     current_folder = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(current_folder, 'config.json'), 'r') as f:
         config = json.load(f)
+    
+    # Override stock symbol if provided as command-line argument
+    if args.symbol:
+        config['general']['stock_symbol'] = args.symbol
     
     # Execute based on mode and type
     if args.mode == 'train':

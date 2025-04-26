@@ -16,6 +16,7 @@ the model filename or specified in the configuration.
 """
 
 import os
+import json
 
 import pandas as pd
 import numpy as np
@@ -59,7 +60,7 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
     days = int(days_match.group(1)) if days_match else config['general']['days']  # Default to days if not found
     
     # Setup logging with 'predict' subfolder
-    logger = Logger.setup(target_feature, is_training=False, model_path=model_path, subfolder_name='predict')
+    logger = Logger.setup(target_feature, is_training=False, model_path=model_path, subfolder_name='predict', config=config)
     
     logger.info("Starting prediction process with configuration:")
     logger.info(f"Target feature: {target_feature}, Days: {days}")
@@ -134,6 +135,24 @@ def predict_future(config: Dict[str, Any]) -> np.ndarray:
         predictions_csv_path = os.path.join(logger.output_dirs['results'], 'predictions_real.csv')
         predictions_df.to_csv(predictions_csv_path, index=False)
         logger.info(f"Predictions saved to {predictions_csv_path}")
+        
+        # Update config.json with the absolute path of the CSV file
+        abs_csv_path = os.path.abspath(predictions_csv_path)
+        logger.info(f"Updating config.json with last_csv: {abs_csv_path}")
+        
+        # Read the current config
+        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config.json')
+        with open(config_path, 'r') as f:
+            config_data = json.load(f)
+        
+        # Update the prediction section with the last_csv parameter
+        config_data['prediction']['last_csv'] = abs_csv_path
+        
+        # Write the updated config back to the file
+        with open(config_path, 'w') as f:
+            json.dump(config_data, f, indent=4)
+        
+        logger.info(f"Config updated with last_csv: {abs_csv_path}")
         
         return y_pred
         

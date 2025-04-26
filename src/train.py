@@ -79,7 +79,7 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     tf.random.set_seed(random_seed)
     
     # Setup logging - explicitly set is_training=True
-    logger = Logger.setup(target_feature, is_training=True)
+    logger = Logger.setup(target_feature, is_training=True, config=config)
     output_dirs = logger.output_dirs
     
     logger.info("Starting model training with configuration:")
@@ -87,23 +87,23 @@ def train_model(config: Dict[str, Any]) -> Sequential:
     
     try:
         # Load raw data
-        data, dates = DataLoader.load_raw_data(config, logger, is_training=True)
+        data, dates = DataLoader.load_raw_data(config, logger)
         print("Loaded data size:", data.shape)
-        print("Loaded data head:\n", data.head())
-        print("Loaded data tail:\n", data.tail())
+        #print("Loaded data head:\n", data.head())
+        #print("Loaded data tail:\n", data.tail())
         
         # Clear zero values from raw data
         data = DataPreprocessor.clear_zero_values(data, logger)
         print("Cleared data size:", data.shape)
-        print("Cleared data head:\n", data.head())
-        print("Cleared data tail:\n", data.tail())
+        #print("Cleared data head:\n", data.head())
+        #print("Cleared data tail:\n", data.tail())
 
         # Split into input and target features
         input_data, target_data = DataLoader.prepare_features(data, config, logger)
         print("Input data size:", input_data.shape)
         print("Target data size:", target_data.shape)
-        print("Input head:\n", input_data.head(), target_data.head())
-        print("Input tail:\n", input_data.tail(), target_data.tail())
+        #print("Input head:\n", input_data.head(), target_data.head())
+        #print("Input tail:\n", input_data.tail(), target_data.tail())
         
         # Normalize input data
         input_normalized, target_normalized, scaler_x, scaler_y = DataPreprocessor.normalize_data(input_data, target_data)
@@ -120,17 +120,17 @@ def train_model(config: Dict[str, Any]) -> Sequential:
             days, input_normalized, target_normalized, logger
         )
         print("Sequence data size:", X_sequence.shape, y_sequence.shape)
-        print("Sequence head:\n", X_sequence[:5], y_sequence[:5])
-        print("Sequence tail:\n", X_sequence[-5:], y_sequence[-5:])
+        #print("Sequence head:\n", X_sequence[:5], y_sequence[:5])
+        #print("Sequence tail:\n", X_sequence[-5:], y_sequence[-5:])
 
         # Split into training and test sets
         X_train, X_test, y_train, y_test = DataPreprocessor.split_train_test(
             X_sequence, y_sequence, test_size, shuffle=shuffle, random_state=random_seed, logger=logger
         )
-        print("Train head:\n", X_train[:5], y_train[:5])
-        print("Train tail:\n", X_train[-5:], y_train[-5:])
-        print("Test head:\n", X_test[:5], y_test[:5])
-        print("Test tail:\n", X_test[-5:], y_test[-5:])
+        #print("Train head:\n", X_train[:5], y_train[:5])
+        #print("Train tail:\n", X_train[-5:], y_train[-5:])
+        #print("Test head:\n", X_test[:5], y_test[:5])
+        #print("Test tail:\n", X_test[-5:], y_test[-5:])
 
         # Build the model using LSTModelBuilder
         model = LSTModelBuilder.build(

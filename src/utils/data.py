@@ -23,8 +23,22 @@ class DataLoader:
             Tuple of (DataFrame with features, Series with dates)
         """
 
-        csv_path = config['general']['csv_path']
+        csv_base_path = config['general']['csv_path']
+        stock_symbol = config['general']['stock_symbol']
         test_size = config['training']['test_size']
+
+        # Remove '^' character from stock symbol if present
+        clean_symbol = stock_symbol.replace('^', '')
+        
+        # Get directory part of the csv_path
+        csv_dir = os.path.dirname(csv_base_path)
+        
+        # Construct the full path with the stock symbol
+        csv_filename = f"{clean_symbol}.csv"
+        csv_path = os.path.join(csv_dir, csv_filename)
+        
+        logger.info(f"Using stock symbol: {stock_symbol} (cleaned: {clean_symbol})")
+        logger.info(f"CSV path: {csv_path}")
 
         input_features = [feat for feat in config['general']['input_features']]
         target_feature = [config['general']['target_feature']]
@@ -33,8 +47,7 @@ class DataLoader:
         logger.info("Loading dataset...")
         current_folder = os.path.abspath(os.path.dirname(__file__))
         csv_path = os.path.join(current_folder, "..\\..\\", csv_path[2:])
-        full_data = pd.read_csv(csv_path)
-        
+        full_data = pd.read_csv(csv_path)        
         # Extract dates by detecting column with datetime format pattern (e.g., 1927-12-30 00:00:00+00:00 or 1927-12-30)
         dates = None
         # Look for a column with datetime format pattern

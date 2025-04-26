@@ -1,54 +1,56 @@
 {
-	"general": {
-		"random_seed": 42,
-		"csv_path": ".\\csv\\S&P500.csv",
-		"results_path": ".\\results",
-		"input_features": [
-			"Open",
-			"Close",
-			"Volume",
-			"High",
-			"Low"
-		],
-		"target_feature": "Close",
-		"days": 30
-	},
+    "general": {
+        "random_seed": 42,
+        "csv_path": ".\\csv\\",
+        "results_path": ".\\results",
+        "stock_symbol": "^GSPC",
+        "input_features": [
+            "Open",
+            "Close",
+            "Volume",
+            "High",
+            "Low"
+        ],
+        "target_feature": "Close",
+        "days": 30
+    },
     "training": {
-		"test_size": 0.1,
-		"validation_split": 0.1,
-		"epochs": 200,
-		"batch_size": 32,
-		"learning_rate": 0.001,
-		"learning_rate_reduction": 0.5,
-		"learning_rate_min": 0.0001,
-		"restore_best_weights": true,
-		"shuffle": true,
-		"patience": {
-			"early_stopping": 50,
-			"learning_rate_reduction": 25
-		}, 
+        "test_size": 0.1,
+        "validation_split": 0.1,
+        "epochs": 2,
+        "batch_size": 32,
+        "learning_rate": 0.001,
+        "learning_rate_reduction": 0.5,
+        "learning_rate_min": 0.0001,
+        "restore_best_weights": true,
+        "shuffle": true,
+        "patience": {
+            "early_stopping": 50,
+            "learning_rate_reduction": 25
+        },
         "model": {
-			"lstm_layers": 1,
+            "lstm_layers": 1,
             "lstm_units": 256,
             "dropout_rate": 0.1,
             "dense_units": 128,
-			"l2_reg": 0.001,
-			"lstm_activation": "tanh",
-			"dense_activation": "tanh",
-			"loss": "huber",
-			"optimizer": "adam",
-			"clipnorm": 1.0,
-			"momentum": 0.9
+            "l2_reg": 0.001,
+            "lstm_activation": "tanh",
+            "dense_activation": "tanh",
+            "loss": "huber",
+            "optimizer": "adam",
+            "clipnorm": 1.0,
+            "momentum": 0.9
         },
-		"verbose": {
-			"fit": 1,
-			"early_stopping": 1,
-			"learning_rate_reduction": 1
-		},
-		"save_model": true
+        "verbose": {
+            "fit": 1,
+            "early_stopping": 1,
+            "learning_rate_reduction": 1
+        },
+        "save_model": true
     },
     "prediction": {
-		"model_path": ".\\results\\close\\2025-04-23_08-53-39\\models\\2025-04-23_08-53-39_lstm_close_30.keras",
-		"evaluate": true
+        "model_path": ".\\results\\close\\2025-04-23_08-53-39\\models\\2025-04-23_08-53-39_lstm_close_30.keras",
+        "evaluate": true,
+        "last_csv": ""
     }
 }

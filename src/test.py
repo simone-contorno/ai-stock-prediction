@@ -64,7 +64,7 @@ def test_model(config: Dict[str, Any]) -> np.ndarray:
     days = int(days_match.group(1)) if days_match else config['general']['days']  # Default to days if not found
     
     # Setup logging with 'test' subfolder
-    logger = Logger.setup(target_feature, is_training=False, model_path=model_path, subfolder_name='test')
+    logger = Logger.setup(target_feature, is_training=False, model_path=model_path, subfolder_name='test', config=config)
     
     logger.info("Starting prediction process with configuration:")
     logger.info(f"Target feature: {target_feature}, Days: {days}")
