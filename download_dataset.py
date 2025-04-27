@@ -16,8 +16,6 @@ import pandas as pd
 import os
 
 # Configuration parameters
-#file_name = "S&P500"  # Name of the output file (without extension)
-#ticker = "^GSPC"      # Yahoo Finance ticker symbol for S&P 500 index (default)
 start_date = None     # Start date for data download (None = earliest available)
 end_date = None       # End date for data download (None = latest available)
 

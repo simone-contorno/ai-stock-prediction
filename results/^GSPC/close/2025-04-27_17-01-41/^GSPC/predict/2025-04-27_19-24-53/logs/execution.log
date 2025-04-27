@@ -1,0 +1,38 @@
+2025-04-27 19:24:53,864 - stock_prediction_Close - INFO - Logging initialized for Close prediction
+2025-04-27 19:24:53,864 - stock_prediction_Close - INFO - Starting prediction process with configuration:
+2025-04-27 19:24:53,865 - stock_prediction_Close - INFO - Target feature: Close, Days: 30
+2025-04-27 19:24:53,865 - stock_prediction_Close - INFO - Model path: .\results\^GSPC\close\2025-04-27_17-01-41\models\2025-04-27_17-01-41_lstm_close_30.keras
+2025-04-27 19:24:53,866 - stock_prediction_Close - INFO - Loading model from .\results\^GSPC\close\2025-04-27_17-01-41\models\2025-04-27_17-01-41_lstm_close_30.keras...
+2025-04-27 19:24:54,240 - stock_prediction_Close - INFO - Model loaded successfully
+2025-04-27 19:24:54,240 - stock_prediction_Close - INFO - Using stock symbol: ^GSPC (cleaned: GSPC)
+2025-04-27 19:24:54,241 - stock_prediction_Close - INFO - CSV path: .\csv\GSPC.csv
+2025-04-27 19:24:54,241 - stock_prediction_Close - INFO - Loading dataset...
+2025-04-27 19:24:54,328 - stock_prediction_Close - INFO - Dataset loaded with shape: (24445, 5)
+2025-04-27 19:24:54,330 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-27 19:24:54,331 - stock_prediction_Close - INFO - Original data shape: (24445, 5)
+2025-04-27 19:24:54,333 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-27 19:24:54,340 - stock_prediction_Close - INFO - Data shape after removing zeros: (13874, 5)
+2025-04-27 19:24:54,342 - stock_prediction_Close - INFO - Remaining zero values: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 0, 'Volume': 0}
+2025-04-27 19:24:54,342 - stock_prediction_Close - INFO - Input features: ['Open', 'Close', 'Volume', 'High', 'Low']
+2025-04-27 19:24:54,343 - stock_prediction_Close - INFO - Target feature: ['Close']
+2025-04-27 19:24:54,345 - stock_prediction_Close - INFO - Input shape: (13874, 5), Target shape: (13874, 1)
+2025-04-27 19:24:54,380 - stock_prediction_Close - INFO - Normalization parameters loaded from C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\models
+2025-04-27 19:24:54,380 - stock_prediction_Close - INFO - Using saved normalization scalers
+2025-04-27 19:24:54,410 - stock_prediction_Close - INFO - Data normalized:
+                Open         Close        Volume          High           Low
+count  13874.000000  13874.000000  13874.000000  13874.000000  13874.000000
+mean       0.184994      0.184740      0.142797      0.185688      0.184537
+std        0.212791      0.212484      0.165897      0.213502      0.212346
+min        0.000000      0.000000      0.000000      0.000000      0.000000
+25%        0.023885      0.023854      0.007391      0.023970      0.023885
+50%        0.134355      0.134207      0.047460      0.135821      0.133022
+75%        0.231556      0.231197      0.294696      0.232453      0.231098
+max        1.000000      1.000000      1.000000      1.000000      1.000000
+2025-04-27 19:24:54,411 - stock_prediction_Close - INFO - Preparing sequence data with shift 30
+2025-04-27 19:24:54,733 - stock_prediction_Close - INFO - Sequence data shapes --> X: (13844, 30, 5), y: N/A
+2025-04-27 19:24:54,735 - stock_prediction_Close - INFO - Making predictions...
+2025-04-27 19:24:55,520 - stock_prediction_Close - INFO - Predictions shape: (30, 1)
+2025-04-27 19:25:03,432 - stock_prediction_Close - INFO - Future predictions plot saved to C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\predict\2025-04-27_19-24-53\plots\predictions_real.png
+2025-04-27 19:25:03,443 - stock_prediction_Close - INFO - Predictions saved to C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\predict\2025-04-27_19-24-53\predictions_real.csv with date column
+2025-04-27 19:25:03,445 - stock_prediction_Close - INFO - Updating config.json with last_csv: C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\predict\2025-04-27_19-24-53\predictions_real.csv
+2025-04-27 19:25:03,453 - stock_prediction_Close - INFO - Config updated with last_csv: C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\predict\2025-04-27_19-24-53\predictions_real.csv

@@ -37,6 +37,65 @@ This project implements Recursive Neural Networks (LSTM) for stock price predict
 - `download_dataset.py`: Script for downloading stock data using yfinance
 - `requirements.txt`: Project dependencies
 
+## Model Architecture
+
+The project implements an LSTM-based neural network for time series prediction:
+
+### Input Layer
+- Accepts sequences of historical stock data with configurable features (Open, Close, Volume, High, Low)
+- Sequence length determined by the `days` parameter in configuration
+
+### LSTM Layers
+- Configurable number of LSTM layers (default: 1)
+- Configurable units per layer (default: 256)
+- Tanh activation function
+- L2 regularization on both kernel and recurrent weights (default: 0.001)
+- Optional dropout for regularization (default: 0.1)
+
+### Dense Layers
+- Hidden dense layer with configurable units (default: 128)
+- Tanh activation function
+- L2 regularization
+
+### Output Layer
+- Single unit with linear activation for regression
+
+### Optimization
+- Configurable optimizer (Adam or SGD)
+- Gradient clipping to prevent exploding gradients (clipnorm: 1.0)
+- Configurable learning rate with reduction on plateau
+- Huber loss function for robustness to outliers
+
+## Training Process
+
+The training pipeline includes:
+
+1. **Data Preprocessing**:
+   - Removal of zero values
+   - Feature normalization using MinMaxScaler
+   - Sequence preparation for LSTM input
+   - Train/test splitting with optional shuffling
+
+2. **Model Training**:
+   - Early stopping to prevent overfitting (patience: 50 epochs)
+   - Learning rate reduction on plateau (factor: 0.5, patience: 25 epochs)
+   - Restoration of best weights after training
+   - Configurable batch size and epochs
+
+3. **Evaluation**:
+   - Mean Absolute Error (MAE)
+   - Mean Squared Error (MSE)
+   - Root Mean Squared Error (RMSE)
+   - Mean Absolute Percentage Error (MAPE)
+
+4. **Visualization**:
+   - Training history plots (loss curves)
+   - Prediction vs. actual value plots
+
+5. **Model Persistence**:
+   - Saving trained models in .keras format
+   - Saving scalers for future predictions
+
 ## Configuration
 
 The `config.json` file contains all necessary parameters:
@@ -66,6 +125,7 @@ The `config.json` file contains all necessary parameters:
 - Matplotlib >= 3.7.0
 - scikit-learn >= 1.3.0
 - yfinance >= 0.2.28
+- Keras >= 2.13.0
 - Additional dependencies listed in requirements.txt
 
 ## Usage
@@ -88,11 +148,15 @@ This will download historical stock data from Yahoo Finance. You can specify a d
 python main.py --mode train
 ```
 
+This will train a new model using the parameters specified in `config.json`. The trained model and related artifacts will be saved in the `results` directory.
+
 ### Testing an Existing Model
 
 ```bash
 python main.py --mode test
 ```
+
+This will evaluate the model specified in the `prediction.model_path` parameter of `config.json` on test data.
 
 ### Making Predictions
 
@@ -100,69 +164,36 @@ python main.py --mode test
 python main.py --mode predict
 ```
 
-### Custom Configuration
+This will use the model specified in the `prediction.model_path` parameter to make predictions on new data.
 
-You can modify the `config.json` file to customize model parameters, input features, and training settings.
+## Customization
 
-## Model Architecture
+You can customize the model by modifying the `config.json` file:
 
-The default model uses an LSTM-based architecture with the following components:
+- Change the target feature (e.g., from Close to Open)
+- Adjust the prediction window (days parameter)
+- Modify model architecture (LSTM layers, units, dropout)
+- Tune training parameters (learning rate, batch size, epochs)
+- Select different optimization strategies
 
-### Input Layer
-- Input shape: (time_steps, features) where time_steps is the sequence length and features is the number of input features
-- The input layer explicitly defines the expected shape for the model
+## Results Organization
 
-### LSTM Layers
-- Configurable number of LSTM layers (default: 1)
-- Default configuration: 256 units in the first layer
-- Funnel architecture that gradually reduces dimensionality in deeper layers
-- Tanh activation function by default
-- Weight initialization using GlorotUniform (Xavier initialization)
-- L2 regularization applied to both kernel and recurrent weights to prevent overfitting
+All results are organized in a structured directory hierarchy:
 
-### Regularization
-- Dropout layer after LSTM (default rate: 10%)
-- L2 regularization on weights (configurable strength)
-- Gradient clipping to prevent exploding gradients
+```
+results/
+└── [stock_ticker]/
+  └── [target_feature]/
+      └── [timestamp]/
+          ├── logs/
+          ├── models/
+          ├── plots/
+          ├── test/
+          └── predict/
+```
 
-### Dense Layers
-- Hidden dense layer with 128 units and ReLU activation
-- L2 regularization applied to weights
+This organization makes it easy to compare different model configurations and track experiments over time.
 
-### Output Layer
-- Dense layer with linear activation for regression task
-- Single output unit for predicting the target feature
+## License
 
-### Compilation
-- Configurable optimizer: Adam (default) or SGD with momentum
-- Default loss function: Huber
-- Default Learning rate: 0.001 
-
-## Training Process
-
-The training process includes several optimization techniques:
-
-### Early Stopping
-- Monitors validation loss to prevent overfitting
-- Stops training when validation loss stops improving
-- Configurable patience (number of epochs with no improvement before stopping)
-- Option to restore best weights from the epoch with the best validation loss
-
-### Learning Rate Reduction
-- Reduces learning rate when training plateaus
-- Monitors training loss
-- Configurable patience for learning rate reduction
-- Configurable reduction factor
-- Minimum learning rate to prevent too small steps
-
-### Data Preprocessing
-- Normalization of input and target features
-- Sequence data preparation for LSTM
-- Train/test splitting with optional shuffling
-
-### Model Evaluation
-- Comprehensive metrics calculation
-- Visualization of training history
-- Prediction plots comparing actual vs. predicted values
-
-All hyperparameters are configurable via the `config.json` file, allowing for easy experimentation with different model architectures and training strategies.
+This project is licensed under the terms of the MIT LICENSE file included in the repository.

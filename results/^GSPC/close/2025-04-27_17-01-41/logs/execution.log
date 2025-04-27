@@ -1,0 +1,49 @@
+2025-04-27 17:01:41,357 - stock_prediction_Close - INFO - Logging initialized for Close training
+2025-04-27 17:01:41,357 - stock_prediction_Close - INFO - Starting model training with configuration:
+2025-04-27 17:01:41,357 - stock_prediction_Close - INFO - Features: ['Open', 'Close', 'Volume', 'High', 'Low'], Target: Close, Days: 30
+2025-04-27 17:01:41,358 - stock_prediction_Close - INFO - Using stock symbol: ^GSPC (cleaned: GSPC)
+2025-04-27 17:01:41,358 - stock_prediction_Close - INFO - CSV path: .\csv\GSPC.csv
+2025-04-27 17:01:41,358 - stock_prediction_Close - INFO - Loading dataset...
+2025-04-27 17:01:41,420 - stock_prediction_Close - INFO - Dataset loaded with shape: (24445, 5)
+2025-04-27 17:01:41,421 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-27 17:01:41,422 - stock_prediction_Close - INFO - Original data shape: (24445, 5)
+2025-04-27 17:01:41,423 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-27 17:01:41,429 - stock_prediction_Close - INFO - Data shape after removing zeros: (13874, 5)
+2025-04-27 17:01:41,430 - stock_prediction_Close - INFO - Remaining zero values: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 0, 'Volume': 0}
+2025-04-27 17:01:41,431 - stock_prediction_Close - INFO - Input features: ['Open', 'Close', 'Volume', 'High', 'Low']
+2025-04-27 17:01:41,431 - stock_prediction_Close - INFO - Target feature: ['Close']
+2025-04-27 17:01:41,432 - stock_prediction_Close - INFO - Input shape: (13874, 5), Target shape: (13874, 1)
+2025-04-27 17:01:41,440 - stock_prediction_Close - INFO - Preparing sequence data with shift 30
+2025-04-27 17:01:42,551 - stock_prediction_Close - INFO - Sequence data shapes --> X: (13814, 30, 5), y: (13814, 1)
+2025-04-27 17:01:42,569 - stock_prediction_Close - INFO - Train-test split - X_train: (12432, 30, 5), y_train: (12432, 1), X_test: (1380, 30, 5), y_test: (1380, 1)
+2025-04-27 17:01:42,570 - stock_prediction_Close - INFO - Building model with LSTM units: 256, Dense units: 128
+2025-04-27 17:01:42,737 - stock_prediction_Close - INFO - Using Adam optimizer with learning rate: 0.001
+2025-04-27 17:01:42,752 - stock_prediction_Close - INFO - Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ lstm (LSTM)                          │ (None, 256)                 │         268,288 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dropout (Dropout)                    │ (None, 256)                 │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense (Dense)                        │ (None, 128)                 │          32,896 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_1 (Dense)                      │ (None, 1)                   │             129 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 301,313 (1.15 MB)
+ Trainable params: 301,313 (1.15 MB)
+ Non-trainable params: 0 (0.00 B)
+
+2025-04-27 17:01:42,753 - stock_prediction_Close - INFO - Starting training for 200 epochs with batch size 32...
+2025-04-27 18:24:04,790 - stock_prediction_Close - INFO - Training completed in 1:22:22.034125
+2025-04-27 18:24:08,685 - stock_prediction_Close - INFO - Training history plot saved to results\^GSPC\close\2025-04-27_17-01-41\plots\training_history.png
+2025-04-27 18:24:08,685 - stock_prediction_Close - INFO - Evaluating model on test data...
+2025-04-27 18:24:09,998 - stock_prediction_Close - INFO - Predictions shape: (1350, 1)
+2025-04-27 18:24:09,999 - stock_prediction_Close - INFO - Test shape: (1350, 1)
+2025-04-27 18:24:13,447 - stock_prediction_Close - INFO - Predictions plot saved to results\^GSPC\close\2025-04-27_17-01-41\plots\training_predictions.png
+2025-04-27 18:24:13,452 - stock_prediction_Close - INFO - Evaluation metrics:
+2025-04-27 18:24:13,452 - stock_prediction_Close - INFO - Mean Absolute Error (MAE): 114.15
+2025-04-27 18:24:13,453 - stock_prediction_Close - INFO - Mean Squared Error (MSE): 21572.05
+2025-04-27 18:24:13,453 - stock_prediction_Close - INFO - Root Mean Squared Error (RMSE): 146.87
+2025-04-27 18:24:13,453 - stock_prediction_Close - INFO - Mean Absolute Percentage Error (MAPE): 2.64 %
+2025-04-27 18:24:13,557 - stock_prediction_Close - INFO - Model saved to results\^GSPC\close\2025-04-27_17-01-41\models\2025-04-27_17-01-41_lstm_close_30.keras

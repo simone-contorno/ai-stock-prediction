@@ -1,0 +1,52 @@
+2025-04-27 18:27:21,020 - stock_prediction_Close - INFO - Logging initialized for Close prediction
+2025-04-27 18:27:21,020 - stock_prediction_Close - INFO - Starting prediction process with configuration:
+2025-04-27 18:27:21,021 - stock_prediction_Close - INFO - Target feature: Close, Days: 30
+2025-04-27 18:27:21,021 - stock_prediction_Close - INFO - Model path: .\results\^GSPC\close\2025-04-27_17-01-41\models\2025-04-27_17-01-41_lstm_close_30.keras
+2025-04-27 18:27:21,022 - stock_prediction_Close - INFO - Loading model from .\results\^GSPC\close\2025-04-27_17-01-41\models\2025-04-27_17-01-41_lstm_close_30.keras...
+2025-04-27 18:27:21,362 - stock_prediction_Close - INFO - Model loaded successfully
+2025-04-27 18:27:21,362 - stock_prediction_Close - INFO - Using stock symbol: ^GSPC (cleaned: GSPC)
+2025-04-27 18:27:21,363 - stock_prediction_Close - INFO - CSV path: .\csv\GSPC.csv
+2025-04-27 18:27:21,364 - stock_prediction_Close - INFO - Loading dataset...
+2025-04-27 18:27:21,537 - stock_prediction_Close - INFO - Dataset loaded with shape: (24445, 5)
+2025-04-27 18:27:21,538 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-27 18:27:21,539 - stock_prediction_Close - INFO - Original data shape: (24445, 5)
+2025-04-27 18:27:21,540 - stock_prediction_Close - INFO - Zero values per column: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 5075, 'Volume': 5496}
+2025-04-27 18:27:21,551 - stock_prediction_Close - INFO - Data shape after removing zeros: (13874, 5)
+2025-04-27 18:27:21,553 - stock_prediction_Close - INFO - Remaining zero values: {'Close': 0, 'High': 0, 'Low': 0, 'Open': 0, 'Volume': 0}
+2025-04-27 18:27:21,553 - stock_prediction_Close - INFO - Input features: ['Open', 'Close', 'Volume', 'High', 'Low']
+2025-04-27 18:27:21,554 - stock_prediction_Close - INFO - Target feature: ['Close']
+2025-04-27 18:27:21,556 - stock_prediction_Close - INFO - Input shape: (13874, 5), Target shape: (13874, 1)
+2025-04-27 18:27:21,616 - stock_prediction_Close - INFO - Normalization parameters loaded from C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\models
+2025-04-27 18:27:21,616 - stock_prediction_Close - INFO - Using saved normalization scalers
+2025-04-27 18:27:21,657 - stock_prediction_Close - INFO - Data normalized:
+                Open         Close        Volume          High           Low
+count  13874.000000  13874.000000  13874.000000  13874.000000  13874.000000
+mean       0.184994      0.184740      0.142797      0.185688      0.184537
+std        0.212791      0.212484      0.165897      0.213502      0.212346
+min        0.000000      0.000000      0.000000      0.000000      0.000000
+25%        0.023885      0.023854      0.007391      0.023970      0.023885
+50%        0.134355      0.134207      0.047460      0.135821      0.133022
+75%        0.231556      0.231197      0.294696      0.232453      0.231098
+max        1.000000      1.000000      1.000000      1.000000      1.000000
+2025-04-27 18:27:21,666 - stock_prediction_Close - INFO - Target data normalized:
+               Close
+count  13874.000000
+mean       0.184740
+std        0.212484
+min        0.000000
+25%        0.023854
+50%        0.134207
+75%        0.231197
+max        1.000000
+2025-04-27 18:27:21,667 - stock_prediction_Close - INFO - Preparing sequence data with shift 30
+2025-04-27 18:27:22,900 - stock_prediction_Close - INFO - Sequence data shapes --> X: (13814, 30, 5), y: (13814, 1)
+2025-04-27 18:27:22,907 - stock_prediction_Close - INFO - Making predictions...
+2025-04-27 18:27:24,088 - stock_prediction_Close - INFO - Predictions shape: (1387, 1)
+2025-04-27 18:27:24,092 - stock_prediction_Close - INFO - Evaluation metrics:
+2025-04-27 18:27:24,092 - stock_prediction_Close - INFO - Mean Absolute Error (MAE): 113.61
+2025-04-27 18:27:24,092 - stock_prediction_Close - INFO - Mean Squared Error (MSE): 21461.54
+2025-04-27 18:27:24,093 - stock_prediction_Close - INFO - Root Mean Squared Error (RMSE): 146.50
+2025-04-27 18:27:24,093 - stock_prediction_Close - INFO - Mean Absolute Percentage Error (MAPE): 2.63 %
+2025-04-27 18:27:24,094 - stock_prediction_Close - INFO - Metrics saved to C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\test\2025-04-27_18-27-21\metrics.txt
+2025-04-27 18:27:31,805 - stock_prediction_Close - INFO - Test plot saved to C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\test\2025-04-27_18-27-21\plots\test.png
+2025-04-27 18:27:31,834 - stock_prediction_Close - INFO - Test predictions saved to C:\Users\simon\Desktop\Programming\ai-stock-prediction\results\^GSPC\close\2025-04-27_17-01-41\^GSPC\test\2025-04-27_18-27-21\test.csv
