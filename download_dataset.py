@@ -13,6 +13,7 @@ Usage:
 
 import yfinance as yf
 import pandas as pd
+import datetime
 import os
 
 # Configuration parameters
@@ -54,7 +55,15 @@ os.makedirs(folder, exist_ok=True)
 
 # Download historical data from Yahoo Finance
 print(f"Downloading {ticker} data...")
-data = yf.download(ticker, start=start_date, end=end_date)
+if start_date and end_date:
+    data = yf.download(ticker, start=start_date, end=end_date)
+elif start_date and not end_date:
+    data = yf.download(ticker, start=start_date, end=datetime.date.today().strftime("%Y-%m-%d"))
+elif end_date and not start_date:
+    data = yf.download(ticker, period="max")
+    data = data.loc[:end_date]  
+else:
+    data = yf.download(ticker, period="max")
 
 # Ensure the result is a DataFrame
 if not isinstance(data, pd.DataFrame):
