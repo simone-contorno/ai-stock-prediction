@@ -18,20 +18,24 @@ This project implements Recursive Neural Networks (RNN) for stock price predicti
   - `predict.py`: Prediction script implementation
 - `csv/`: Directory containing historical stock data (e.g., S&P500.csv)
 - `results/`: Directory containing trained models and their results
-  - Organized by target feature (e.g., `close/`)
-    - Subdirectories organized by timestamp (e.g., `2025-04-23_08-53-39/`)
-      - `logs/`: Execution logs with detailed training information
-      - `models/`: Saved model files (.keras) and scalers (.joblib)
-      - `plots/`: Visualization plots (training history, predictions)
-      - `test/`: Test results organized by timestamp
-        - `logs/`: Test execution logs
-        - `plots/`: Test visualization plots
-        - `metrics.txt`: Detailed evaluation metrics
-        - `test.csv`: Test data and predictions
-      - `predict/`: Prediction results organized by timestamp
-        - `logs/`: Prediction execution logs
-        - `plots/`: Prediction visualization plots
-        - `predictions_real.csv`: Prediction data and actual values
+  - Organized by ticker symbol (e.g., `^GSPC/`)
+    - Subdirectories by target feature (e.g., `close/`)
+      - Subdirectories organized by timestamp (e.g., `2025-04-27_17-01-41/`)
+        - `logs/`: Execution logs with detailed training information
+        - `models/`: Saved model files (.keras) and scalers (.joblib)
+        - `plots/`: Visualization plots (training history, predictions)
+        - Subdirectories by ticker symbol (e.g, `^GSPC/`)
+          - `test/`: Test results organized by timestamp
+            - Subdirectories organized by timestamp (e.g., `2025-04-27_18-27-21/`)
+              - `logs/`: Test execution logs
+              - `plots/`: Test visualization plots
+              - `metrics.txt`: Detailed evaluation metrics
+              - `test.csv`: Test data and predictions
+          - `predict/`: Prediction results organized by timestamp
+            - Subdirectories organized by timestamp (e.g., `2025-04-27_19-24-53/`)
+              - `logs/`: Prediction execution logs
+              - `plots/`: Prediction visualization plots
+              - `predictions_real.csv`: Prediction data and actual values
 - `config.json`: Configuration file for model parameters and training settings
 - `main.py`: Main entry point for running the application
 - `download_dataset.py`: Script for downloading stock data using yfinance
@@ -166,6 +170,26 @@ python main.py --mode predict
 
 This will use the model specified in the `prediction.model_path` parameter to make predictions on new data.
 
+### Download dataset first
+
+Use the `--download` or `-d` flag with `main.py` to automatically download the dataset before running any mode.  
+
+Example:
+```bash
+python main.py --mode predict --download
+python main.py --mode predict -d 
+```
+This ensures the latest data is downloaded and used.
+
+### Specify the ticker symbol
+
+By specifying the `--symbol` flag, the ticker symbol will be passed to the downloader and used as the stock ticker for both downloading and model operations.
+
+Example:
+```bash
+python main.py --mode test --symbol ^GSPC
+```
+
 ## Customization
 
 You can customize the model by modifying the `config.json` file:
@@ -175,24 +199,6 @@ You can customize the model by modifying the `config.json` file:
 - Modify model architecture (LSTM layers, units, dropout)
 - Tune training parameters (learning rate, batch size, epochs)
 - Select different optimization strategies
-
-## Results Organization
-
-All results are organized in a structured directory hierarchy:
-
-```
-results/
-└── [stock_ticker]/
-  └── [target_feature]/
-      └── [timestamp]/
-          ├── logs/
-          ├── models/
-          ├── plots/
-          ├── test/
-          └── predict/
-```
-
-This organization makes it easy to compare different model configurations and track experiments over time.
 
 ## License
 
