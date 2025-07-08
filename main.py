@@ -22,6 +22,7 @@ import json
 from src.train import train_model
 from src.test import test_model
 from src.predict import predict_future
+import subprocess
 
 def main():
     # Parse command line arguments
@@ -29,8 +30,21 @@ def main():
     parser.add_argument('--mode', type=str, choices=['train', 'test', 'predict'], required=True,
                         help='Mode: train a new model, test an existing model, or make future predictions')
     parser.add_argument('--symbol', type=str, help='Stock market symbol to use (overrides config.json)')
+    parser.add_argument('--download', '-d', action='store_true',
+                        help='Download the dataset before running')
     args = parser.parse_args()
     
+    # Download dataset if requested
+    if args.download:
+        print("Downloading dataset...")
+        current_folder = os.path.abspath(os.path.dirname(__file__))
+        download_script = os.path.join(current_folder, 'download_dataset.py')
+        cmd = ['python', download_script]
+        if args.symbol:
+            cmd += ['--ticker', args.symbol]
+        subprocess.run(cmd, check=True)
+        print("Dataset download completed.")
+
     # Load configuration
     current_folder = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(current_folder, 'config.json'), 'r') as f:
